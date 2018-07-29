@@ -68,6 +68,7 @@ extern "C" {
 //#define DM_OPEARTION_FAULT_RESET		 (1 << 5)
 #define DM_FOR_TERM1     (1 << 0)
 #define DM_REV_TERM2     (1 << 1)
+#define DM_TRIP_TERM3	 (1 << 2)
 
 typedef enum
 {
@@ -101,22 +102,18 @@ typedef enum
     STOP_Timer  = 3
 } STOP_SELECTION_e;
 
-typedef enum
-{
-    FaultType_NoFault = (0<< 0),
-    FaultType_EEProm24LC32 = (1 << 0),
-    FaultType_IoExpander = (1 << 1),
-} HARDWARE_FaultType_e;
 
-typedef enum
-{
-    TripType_NoTrip   = (0 << 0),
-    TripType_Hardware = (1 << 0),
-    TripType_UV       = (1 << 1),
-    TripType_OV       = (1 << 2),
-    TripType_OC       = (1 << 3),
-    TripType_OH       = (1 << 4),
-} INVERTER_TripType_e;
+//typedef enum
+//{
+#define   TripType_NoTrip    (0 << 0)
+#define   TripType_EEProm 	 (1 << 0)
+#define	  TripType_IOExpander  (1 << 1)
+#define   TripType_UV         (1 << 2)
+#define   TripType_OV         (1 << 3)
+#define   TripType_OC         (1 << 4)
+#define   TripType_OH         (1 << 5)
+#define   TripType_Extern	  (1 << 6)
+//} uint16_t;
 
 typedef enum
 {
@@ -146,8 +143,6 @@ typedef enum
 } DM_TYPE_e;
 
 
-
-
 typedef enum
 {
 	DM_ATTRIBUTE_Read 	= 0x0001,
@@ -159,9 +154,10 @@ typedef enum
 	DM_ATTRIBUTE_Point1 = 0x0010,
 	DM_ATTRIBUTE_Point2 = 0x0020,
 	DM_ATTRIBUTE_Point3 = 0x0030,
-	DM_ATTRIBUTE_Hex2	= 0x0040,
-	DM_ATTRIBUTE_Hex4	= 0x0050,
-	DM_ATTRIBUTE_Sts    = 0x0060,
+	DM_ATTRIBUTE_Point4 = 0x0040,
+	DM_ATTRIBUTE_Hex2	= 0x0050,
+	DM_ATTRIBUTE_Hex4	= 0x0060,
+	DM_ATTRIBUTE_Sts    = 0x0070,
 
 	DM_ATTRIBUTE_Int16  = 0x0100,
 	DM_ATTRIBUTE_UInt16 = 0x0200,
@@ -185,8 +181,9 @@ typedef enum
 	DM_UNIT_Percent = 0x0007,
 	DM_UNIT_Sec	 = 0x0008,
 	DM_UNIT_Ntm  = 0x0009,
-	DM_UNIT_Temp = 0x0010,
-	DM_UNIT_TRIP = 0x0011
+	DM_UNIT_Temp = 0x000A,
+	DM_UNIT_mHenry = 0x000B,
+	DM_UNIT_TRIP = 0x0010
 } DM_UNIT_e;
 
 #define I2C_ADDRESS_INVALID		0xffff
@@ -266,10 +263,10 @@ typedef struct _DM_Obj_
 
 	bool                    bLocalMode, bAutotuneMode,bReverseProhibit;
 	uint_least8_t           u8OperationSignal;
-	HARDWARE_FaultType_e    hardwareFaultType;
-	//INVERTER_TripType_e     inverterTripType;
-	INVERTER_TripType_e		tripTypeTrace[5];
+	uint16_t		        au16TripTypeTrace[5];
+	bool					bFirstDisplayTripe;
 
+	uint_least8_t           u8InitialLevel;
 
 	OPERATOR_ACCESS_e       operatorAccess;
 	CTL_METHOD_e            ctlMethod;
@@ -278,7 +275,23 @@ typedef struct _DM_Obj_
 	STOP_SELECTION_e        stopSelect;
 	int16_t                 i16RefFreqHz, i16RefCurrent;
 	uint16_t                u16OutputTerm, u16AccTime;
-	uint16_t				u16DCBusMax, u16DCBusMin, u16CurrentMax, u16CurrentMin;
+	uint16_t				u16DCBusMax, u16DCBusMin, u16CurrentMax;		//point0, point0, point1
+
+	uint16_t				u16VBias1, u16VBias2, u16VBias3;		//Point3
+	uint16_t				u16IBias1, u16IBias2, u16IBias3;		//Point3
+
+
+	uint16_t				u16ResEstCurrent, u16IndEstCurrent, u16FluxEstHz;		//point1
+	uint16_t				u16MotorRs, u16MotorRr;		//Point4
+	uint16_t				u16MotorLd, u16MotorLq;		//Point4
+	uint16_t				u16RatedFlux,u16MagnetCur;	//
+
+
+#define USER_MOTOR_RES_EST_CURRENT      (0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+#define USER_MOTOR_IND_EST_CURRENT      (-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+#define USER_MOTOR_MAX_CURRENT          (18)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)
+
 } DM_Obj;
 
 
@@ -308,16 +321,22 @@ extern void DM_run(DM_Handle dmHandle, HAL_AdcData_t *pAdcData, _iq iqOutFreq, _
 inline bool DM_isInverterTrip(DM_Handle dmHandle)
 {
     DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-    return (pdmObj->hardwareFaultType != FaultType_NoFault);
+    return (pdmObj->au16TripTypeTrace[0] != TripType_NoTrip );
 }
 
-
-inline bool DM_isHardwareFault(DM_Handle dmHandle)
+inline bool DM_isTripDisplay(DM_Handle dmHandle)
 {
     DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-    return (pdmObj->tripTypeTrace[0] != TripType_NoTrip);
+    return pdmObj->bFirstDisplayTripe;
 }
 
+
+/*inline bool DM_isHardwareFault(DM_Handle dmHandle)
+{
+    DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+    return (pdmObj->hardwareFaultType  != FaultType_NoFault);
+}
+*/
 
 
 inline bool DM_isLocalMode(DM_Handle dmHandle)
@@ -443,55 +462,90 @@ inline _iq DM_getFreqOutPu(DM_Handle dmHandle)
 
 inline bool DM_isFreqOutLowSpeed(DM_Handle dmHandle)
 {
-    return _IQabs(DM_getFreqOutPu(dmHandle) < _IQ(0.01));
+    return _IQabs(DM_getFreqOutPu(dmHandle)) < _IQ(0.01);
 }
 
-extern void DM_runInputRef(DM_Handle dmHandle);
-extern void DM_runOperStatus(DM_Handle dmHandle);
+extern _iq DM_getLocalFreqRef(DM_Handle dmHandle);
+extern _iq DM_getRemoteFreqRef(DM_Handle dmHandle);
+extern _iq DM_getLocalCurrentRef(DM_Handle dmHandle);
+extern _iq DM_getRemoteCurrentRef(DM_Handle dmHandle);
+
+extern void DM_runEmergyStop(DM_Handle dmHandle);
+
+
+extern void DM_RampStop(DM_Handle dmHandle);
+extern void DM_FreeRun(DM_Handle dmHandle);
+extern void DM_setFreqRef(DM_Handle dmHandle);
+extern void DM_setTorqueRef(DM_Handle dmHandle);
+extern void DM_setInputRef(DM_Handle dmHandle);
+
+
+
+
 extern void DM_runRefLimit(DM_Handle dmHandle);
+extern void DM_runOperation(DM_Handle dmHandle);
 
 
-inline INVERTER_TripType_e DM_getInverterTripType(DM_Handle handle)
+//extern void DM_runInputRef(DM_Handle dmHandle);
+//extern void DM_runOperStatus(DM_Handle dmHandle);
+
+inline uint16_t DM_getInverterTripType(DM_Handle handle)
 {
     DM_Obj *pdmObj = (DM_Obj *) handle;
-    return pdmObj->tripTypeTrace[0];
+    return pdmObj->au16TripTypeTrace[0];
 }
 
-inline bool DM_isInverterTripType(DM_Handle handle, INVERTER_TripType_e tripType)
+inline bool DM_isInverterTripType(DM_Handle handle, uint16_t tripType)
 {
     DM_Obj *pObj = (DM_Obj *)handle;
-    return (pObj->tripTypeTrace[0] & tripType);
+    return (pObj->au16TripTypeTrace[0] & tripType);
 }
 
-inline void DM_setInverterTripType(DM_Handle handle, INVERTER_TripType_e tripType)
+inline void DM_setFirstDisplayTrip(DM_Handle handle, bool bFlag)
 {
-    if (!DM_isInverterTripType(handle, tripType))
-    {
-        DM_Obj *pdmObj = (DM_Obj *) handle;
-        uint_least8_t i;
-        for (i=1; i< MAX_TRIP_TRACE ; i++)
-        	pdmObj->tripTypeTrace[i] = pdmObj->tripTypeTrace[i-1];
+	DM_Obj *pdmObj = (DM_Obj *) handle;
+	pdmObj->bFirstDisplayTripe = bFlag;
+}
 
-        pdmObj->tripTypeTrace[0] |= tripType;
-        //DM_setFirstDisplayTrip(handle);
+inline void DM_setInverterTripType(DM_Handle handle, uint16_t u16TripType)
+{
+    if (!DM_isInverterTripType(handle, u16TripType))
+    {
+    	DM_Obj *pdmObj = (DM_Obj *) handle;
+    	if (DM_isInverterTrip(handle))
+    	{
+    		// Adding Multi-Trip
+    		pdmObj->au16TripTypeTrace[0] |= u16TripType;
+    	}
+    	else
+    	{
+    		//Single trip
+    		pdmObj->au16TripTypeTrace[0] = u16TripType;
+    		pdmObj->bFirstDisplayTripe = true;
+
+    	}
     }
 }
 
-inline void DM_clrInverterTripType(DM_Handle handle, INVERTER_TripType_e tripType)
+inline void DM_clrInverterTripType(DM_Handle handle, uint16_t u16TripType)
 {
-    if (DM_isInverterTripType(handle, tripType))
+    if (DM_isInverterTripType(handle, u16TripType))
     {
         DM_Obj *pdmObj = (DM_Obj *) handle;
         uint_least8_t i;
-        for (i=1; i< MAX_TRIP_TRACE ; i++)
-          	pdmObj->tripTypeTrace[i] = pdmObj->tripTypeTrace[i-1];
 
-        pdmObj->tripTypeTrace[0] &= (~tripType);
-        //if (pdmObj->inverterTripType == TripType_NoTrip)
-         //   DM_clrFirstDisplayTrip(handle);
+        for (i= MAX_TRIP_TRACE-1; i > 0 ; i--)
+            pdmObj->au16TripTypeTrace[i] = pdmObj->au16TripTypeTrace[i-1];
+
+        pdmObj->au16TripTypeTrace[0] &= (~u16TripType);
+        if (pdmObj->au16TripTypeTrace[0] > u16TripType)	//remove onetrip
+        	pdmObj->bFirstDisplayTripe = true;
+
     }
-}
-inline HARDWARE_FaultType_e DM_getHardwareFaultType(DM_Handle handle)
+ }
+
+
+/*inline HARDWARE_FaultType_e DM_getHardwareFaultType(DM_Handle handle)
 {
     DM_Obj *pdmObj = (DM_Obj *) handle;
     return pdmObj->hardwareFaultType;
@@ -528,13 +582,13 @@ inline void DM_clrHardwareFaultType(DM_Handle handle,HARDWARE_FaultType_e faultT
             DM_clrInverterTripType(handle, TripType_Hardware);
     }
 
-}
+}*/
 
 
 
-extern void DM_outHardwareFaultName(DM_Handle dmHandle, char *pi8String);
-extern void DM_outInverterTripName1(DM_Handle dmHandle, char *pi8String);
-extern void DM_outInverterTripName2(DM_Handle dmHandle, char *pi8String);
+//extern void DM_outHardwareFaultName(DM_Handle dmHandle, char *pi8String);
+extern void DM_outInverterTripName1(uint16_t tripType, char *pi8String);
+extern void DM_outInverterTripName2(uint16_t tripType, char *pi8String);
 extern void DM_autotunePrepStart(DM_Handle dmHandle);
 extern void DM_autotuneStart(DM_Handle dmHandle);
 extern void DM_autotuneEnd(DM_Handle dmHandle);
@@ -596,10 +650,10 @@ extern void DM_outFunction(DM_Handle dmHandle,
 				   uint_least8_t u8ModeIndex, uint_least8_t u8GroupIndex, uint_least8_t u8FunIndex,
 				   char *pai8Line1, char *pai8Line2);
 
+extern void DM_saveMotorParameters(DM_Handle dmHandle);
 
-
-extern void DM_setCallbackFreqRef(DM_Handle handle, const DM_Cell *pdmCell);
-extern void DM_setCallbackCurrentRef(DM_Handle handle, const DM_Cell *pdmCell);
+//extern void DM_setCallbackFreqRef(DM_Handle handle, const DM_Cell *pdmCell);
+//extern void DM_setCallbackCurrentRef(DM_Handle handle, const DM_Cell *pdmCell);
 
 extern int32_t DM_getCallbackFreqOutHz(DM_Handle handle);
 extern int32_t DM_getCallbackFreqOutRpm(DM_Handle handle);
@@ -632,9 +686,20 @@ extern int32_t DM_getCallbackExtAd6(DM_Handle handle);
 extern int32_t DM_getCallbackVersion(DM_Handle handle);
 
 extern int32_t DM_getCallbackAccTime(DM_Handle handle);
+
+extern void DM_setCallbackCtlLoop(DM_Handle dmHandle, const DM_Cell *pdmCell);
 extern void DM_setCallbackAccTime(DM_Handle handle, const DM_Cell *pdmCell);
 
+extern void DM_setCallbackResEstCurrent(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackIndEstCurrent(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackFluxEstHz(DM_Handle handle, const DM_Cell *pdmCell);
 
+extern void DM_setCallbackResStator(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackResRotor(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackIndAxisD(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackIndAxisQ(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackRatedFlux(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackMagnetCur(DM_Handle handle, const DM_Cell *pdmCell);
 
 #ifdef __cplusplus
 }

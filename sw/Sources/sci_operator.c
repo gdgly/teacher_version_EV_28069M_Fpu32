@@ -281,14 +281,16 @@ bool OPERATOR_isKey(OPERATOR_Handle operHandle, OPERRATOR_Key_e operKey)
 bool OPERATOR_showEmergyTrip(OPERATOR_Handle operHandle)
 {
     DM_Handle dmHandle = OPERATOR_getDMHandle(operHandle);
-    if (DM_isInverterTrip(dmHandle))
+    if (DM_isTripDisplay(dmHandle))
     {
         char ai8Line1[20], ai8Line2[20];
-        DM_outInverterTripName1(dmHandle, ai8Line1);
-        DM_outInverterTripName2(dmHandle, ai8Line2);
+        uint16_t u16TripType;
+        u16TripType = DM_getInverterTripType(dmHandle);
+        DM_outInverterTripName1(u16TripType, ai8Line1);
+        DM_outInverterTripName2(u16TripType, ai8Line2);
 
         OPERATOR_setLEDBlink(operHandle,  OPERATOR_STOP_LED | OPERATOR_RUN_LED | OPERATOR_DRIVE_LED | OPERATOR_REV_LED |
-                                              OPERATOR_FWD_LED  | OPERATOR_SEQ_LED | OPERATOR_SEQ_LED | OPERATOR_REF_LED);
+                                          OPERATOR_FWD_LED  | OPERATOR_SEQ_LED | OPERATOR_SEQ_LED | OPERATOR_REF_LED);
         OPERATOR_clearLCDAll(operHandle);
         OPERATOR_setCenterLCDString(operHandle,0,ai8Line1);
         OPERATOR_setCenterLCDString(operHandle,1,ai8Line2);
@@ -422,6 +424,9 @@ void DetermineBlinkDig(OPERATOR_Handle operHandle)
 		case 1000:
 			u8LoopNo = 4;
 			break;
+		case 10000:
+			u8LoopNo = 5;
+			break;
 		default:
 			u8LoopNo = 1;
 			break;
@@ -518,6 +523,7 @@ void OPERATOR_convertEstState(EST_State_e estState, char *pai8String)
 void OPERATOR_showAutoTune(OPERATOR_Handle operHandle)
 {
     OPERATOR_Obj *pOperator = (OPERATOR_Obj *) operHandle;
+    static bool bSaveMotorFlag = false;
     char ai8Line1[20], ai8Line2[20];
 
     OPERATOR_clearLCDAll(operHandle);
@@ -529,6 +535,7 @@ void OPERATOR_showAutoTune(OPERATOR_Handle operHandle)
                                             OPERATOR_FWD_LED  | OPERATOR_SEQ_LED | OPERATOR_SEQ_LED | OPERATOR_REF_LED);
 
             strcpy(ai8Line2,"Prepare to start");
+            bSaveMotorFlag = false;
             //pOperator->estStateAutotune = EST_State_Idle;
             break;
         case 1:
@@ -546,6 +553,11 @@ void OPERATOR_showAutoTune(OPERATOR_Handle operHandle)
         	                                OPERATOR_FWD_LED  | OPERATOR_SEQ_LED | OPERATOR_SEQ_LED | OPERATOR_REF_LED);
 
         	strcpy(ai8Line2,"Proc complete");
+        	if (!bSaveMotorFlag)
+        	{
+        		bSaveMotorFlag = true;
+        		DM_saveMotorParameters(pOperator->dmHandle);
+        	}
         	break;
 
 
@@ -561,7 +573,7 @@ void OPERATOR_runMenuKey(OPERATOR_Handle operHandle)
 	pOperator->OpStatus = OP_STATUS_MODELEVEL1;
 	pOperator->u8ModeIndex = pOperator->u8GroupIndex = pOperator->u8FunIndex = pOperator->u8CellIndex = 0;
 
-	if (DM_getAutotuneState(pOperator->dmHandle))
+	if (DM_isAutotuneMode(pOperator->dmHandle))
 	{
 		DM_autotuneEnd(pOperator->dmHandle);
 		DM_setAutotuneMode(pOperator->dmHandle, false);
@@ -613,7 +625,7 @@ void OPERATOR_runUpKey(OPERATOR_Handle operHandle)
 			}
 			else
 			{
-				u8ItemNo = DM_getFunctionSizeNo(dmHandle, pOperator->u8ModeIndex, pOperator->u8FunIndex);
+				u8ItemNo = DM_getFunctionSizeNo(dmHandle, pOperator->u8ModeIndex, pOperator->u8GroupIndex);
 				pOperator->u8FunIndex = (pOperator->u8FunIndex+1)% u8ItemNo;
 			}
 			OPERATOR_showFunLevel(operHandle);
@@ -736,7 +748,7 @@ void OPERATOR_runDownKey(OPERATOR_Handle operHandle)
 			}
 			else
 			{
-				u8ItemNo = DM_getFunctionSizeNo(dmHandle, pOperator->u8ModeIndex, pOperator->u8FunIndex);
+				u8ItemNo = DM_getFunctionSizeNo(dmHandle, pOperator->u8ModeIndex, pOperator->u8GroupIndex);
 				if (pOperator->u8FunIndex)
 					pOperator->u8FunIndex--;
 				else
@@ -1125,7 +1137,7 @@ void OPERATOR_runStartKey(OPERATOR_Handle operHandle)
     if (DM_isLocalMode(dmHandle) || (DM_getRunSelect(dmHandle) == REF_DigialOperator))
     {
         DM_setRunStatus(dmHandle);
-        DM_runOperStatus(dmHandle);
+        //DM_runOperStatus(dmHandle);
     }
 
   	OPERATOR_setupLEDs(operHandle);
@@ -1138,7 +1150,6 @@ void OPERATOR_runStopKey(OPERATOR_Handle operHandle)
     if (DM_isLocalMode(dmHandle) || (DM_getRunSelect(dmHandle) == REF_DigialOperator))
     {
         DM_setStopStatus(dmHandle);
-        DM_runOperStatus(dmHandle);
     }
  	OPERATOR_setupLEDs(operHandle);
 
@@ -1240,10 +1251,8 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 		}
 		else
 		{
-		    static bool bEmergyStatus = false;
-
-		    if (!bEmergyStatus)
-		         bEmergyStatus = OPERATOR_showEmergyTrip(operHandle);
+		    bool bEmergyStatus;
+		    bEmergyStatus = OPERATOR_showEmergyTrip(operHandle);
 
 	        if (OPERATOR_isKey(operHandle, OPERATOR_UP_KEY))
 	        {
@@ -1281,8 +1290,8 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 	        {
 	            if (bEmergyStatus)
 	            {
+	            	DM_setFirstDisplayTrip(pOperObj->dmHandle, false);
 	                OPERATOR_runMenuKey(operHandle);
-	                bEmergyStatus = false;
 	            }
 	            else
 	                OPERATOR_runEnterKey(operHandle);
@@ -1295,8 +1304,8 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 	        {
 	            if (bEmergyStatus)
 	            {
+	            	DM_setFirstDisplayTrip(pOperObj->dmHandle, false);
 	                OPERATOR_runMenuKey(operHandle);
-	                bEmergyStatus = false;
 	            }
 	            else
 	                OPERATOR_runEscKey(operHandle);
@@ -1312,8 +1321,8 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 	        	{
 	        		 if (bEmergyStatus)
 	        		 {
+	        			 DM_setFirstDisplayTrip(pOperObj->dmHandle, false);
 	        			 OPERATOR_runMenuKey(operHandle);
-	        			 bEmergyStatus = false;
 	        		 }
 	        		 else
 	        			 OPERATOR_runResetKey(operHandle);
@@ -1363,11 +1372,11 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 	        {
 	            if (bEmergyStatus)
 	            {
-	                OPERATOR_runMenuKey(operHandle);
-	                bEmergyStatus = false;
+	            	DM_setFirstDisplayTrip(pOperObj->dmHandle, false);
+	            	//OPERATOR_runMenuKey(operHandle);
 	            }
-	            else
-	                OPERATOR_runMenuKey(operHandle);
+	            //else
+	            OPERATOR_runMenuKey(operHandle);
 
 	            u16KeyDelayCnt = DATA_ConvertToCnt(KEY_DELAY_500MS);    // 500 ms
 	            u8LastKey = OPERATOR_NO_KEY;
@@ -1379,9 +1388,12 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 	        }
 	        else
 	        {
-	            u16KeyDelayCnt = OPERATOR_runNoKey(operHandle);
-	            u8LastKey = OPERATOR_NO_KEY;
-	            u16ContNo = 0;
+	        	if ( !bEmergyStatus)
+	        	{
+	        		u16KeyDelayCnt = OPERATOR_runNoKey(operHandle);
+	        		u8LastKey = OPERATOR_NO_KEY;
+	        		u16ContNo = 0;
+	        	}
 	        }
 		}
 
@@ -1391,7 +1403,6 @@ void OPERATOR_run(OPERATOR_Handle operHandle)
 
 
 //g_pOperObj
-
 
 //------------------------------------------------------------------------
 //

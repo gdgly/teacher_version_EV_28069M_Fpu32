@@ -248,7 +248,7 @@ void main(void)
 	}
 
 	// set the default controller parameters
-	CTRL_setParams(gCtrlHandle,&gUserParams);
+	//CTRL_setParams(gCtrlHandle,&gUserParams);
 
 	// setup the ENC module
 	ENC_setup(gEncHandle, 100, USER_MOTOR_NUM_POLE_PAIRS, USER_MOTOR_ENCODER_LINES, 0, USER_IQ_FULL_SCALE_FREQ_Hz, USER_ISR_FREQ_Hz, 8000.0); //Org
@@ -305,15 +305,15 @@ void main(void)
 //  gDacData.ptrData[2] = &gPwmData.Tabc.value[2];
 //  gDacData.ptrData[3] = &gAdcData.V.value[0];
 
-	gDacData.api32Data[0] = &gPwmData.Tabc.aiqValue[1];
-	gDacData.api32Data[1] = &gAdcData.I.aiqValue[1];
-	gDacData.api32Data[2] = &gPwmData.Tabc.aiqValue[0];
-	gDacData.api32Data[3] = &gAdcData.V.aiqValue[0];
+//	gDacData.api32Data[0] = &gPwmData.Tabc.aiqValue[1];
+//	gDacData.api32Data[1] = &gAdcData.I.aiqValue[0];
+//	gDacData.api32Data[2] = &gPwmData.Tabc.aiqValue[0];
+//	gDacData.api32Data[3] = &gAdcData.V.aiqValue[0];
 
-//	gDacData.api32Data[0] = &gPwmData.Tabc.aiqValue[0];
-//	gDacData.api32Data[1] = &gPwmData.Tabc.aiqValue[1];
-//	gDacData.api32Data[2] = &gPwmData.Tabc.aiqValue[2];
-//	gDacData.api32Data[3] = &gPwmData.Tabc.aiqValue[0];
+	gDacData.api32Data[0] = &gPwmData.Tabc.aiqValue[0];
+	gDacData.api32Data[1] = &gPwmData.Tabc.aiqValue[1];
+	gDacData.api32Data[2] = &gPwmData.Tabc.aiqValue[2];
+	gDacData.api32Data[3] = &gPwmData.Tabc.aiqValue[0];
 
 
     HAL_setDacParameters(gHalHandle, &gDacData);
@@ -356,6 +356,9 @@ void main(void)
 //	LCD_setup(gLcdHandle, gI2cMessageHandle);		//I2C interrupt must turn on
 	DM_setup(gdmHandle,gEepromHandle );
     IOEXPAND_setup(gIoexpandHandle,gI2cMessageHandle);
+
+    // set the default controller parameters
+    CTRL_setParams(gCtrlHandle,&gUserParams);	//Reload Parameters (called from EEProm)
 
 /* (Org)
   // initialize the SLIP module
@@ -418,33 +421,6 @@ void main(void)
  	for(;;)
  	{
 
- 		/*{
- 			uint16_t i;
-
- 		     //uint16_t au16TxData[32], au16RxData[32];
- 		  		//uint16_t  j;
- 		  		//uint16_t u16Pass, u16Fail;
- 		  		//uint16_t u16No;
- 		  	char au8String0[]="NCTU Test";
- 		  		//char au8String1[]="I love You.";
-
- 		  	LCD_setCursor(gLcdHandle,4, 0);
- 		  	LCD_outString(gLcdHandle, au8String0);
- 		  	i=0;
- 		  	for (;;)
- 		  	{
- 		  		char au8Data[30];
- 		  		LCD_setCursor(gLcdHandle,4, 1);
- 		  		sprintf(au8Data, "%i ", i++);
- 		  		LCD_outString(gLcdHandle, au8Data);
-
- 		  	}
- 		}*/
- 	   /*uint16_t i;
- 	   for (i=0; i<1000; i+=2)
- 	   {
- 	       EEPROM_WriteVerify(gEepromHandle, i, 100+i);
- 	   }*/
 
 
 	  while(!(gMotorVars.bFlag_enableSys));
@@ -454,8 +430,6 @@ void main(void)
 		  CTL_LOOP_e cltLoop = DM_getCtlLoop(gdmHandle);
 		  bool bResult = !(cltLoop == CTL_Current_Loop);
 		  CTRL_setFlag_enableSpeedCtrl(gCtrlHandle, bResult);
-		  //CTRL_setFlag_enableSpeedCtrl(gCtrlHandle, false);	//Org
-		  //CTRL_setFlag_enableSpeedCtrl(gCtrlHandle, true);	//Modify
 	  }
 
 	  // loop while the enable system flag is true
@@ -498,14 +472,24 @@ void main(void)
 					  else
 					  {
 						  // set the current bias
-						  HAL_setBias(gHalHandle,HAL_SensorType_Current,0,_IQ(I_A_offset));
+						 /* HAL_setBias(gHalHandle,HAL_SensorType_Current,0,_IQ(I_A_offset));
 						  HAL_setBias(gHalHandle,HAL_SensorType_Current,1,_IQ(I_B_offset));
-						  HAL_setBias(gHalHandle,HAL_SensorType_Current,2,_IQ(I_C_offset));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Current,2,_IQ(I_C_offset));*/
 
 						  // set the voltage bias
-						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,0,_IQ(V_A_offset));
+						 /* HAL_setBias(gHalHandle,HAL_SensorType_Voltage,0,_IQ(V_A_offset));
 						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,1,_IQ(V_B_offset));
-						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,2,_IQ(V_C_offset));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,2,_IQ(V_C_offset));*/
+
+						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,0,_IQ(gdmObj.u16VBias1/1000.));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,1,_IQ(gdmObj.u16VBias2/1000.));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,2,_IQ(gdmObj.u16VBias3/1000.));
+
+						  HAL_setBias(gHalHandle,HAL_SensorType_Current,0,_IQ(gdmObj.u16IBias1/1000.));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Current,1,_IQ(gdmObj.u16IBias2/1000.));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Current,2,_IQ(gdmObj.u16IBias3/1000.));
+
+
 					  }
 
 					  // Return the bias value for currents
@@ -697,8 +681,15 @@ interrupt void adcInt1ISR(void)	// MainISR
 	{
 		// run the controller
 		//CTRL_run(gCtrlHandle,gHalHandle,&gAdcData,&gPwmData,ENC_getElecAnglePu(gEncHandle));	//Org
-		CTRL_run(gCtrlHandle,gHalHandle,gHallBLDCHandle,
-		         &gAdcData,&gPwmData,EST_getAngle_pu(gCtrlHandle->estHandle));
+		CTL_METHOD_e ctlMethod = DM_getCtlMethod(gdmHandle);
+		_iq iqAnglePu;
+		if (ctlMethod == CTL_FOC_w_Encoder1)
+			iqAnglePu = ENC_getElecAnglePu(gEncHandle);
+		else
+			iqAnglePu = EST_getAngle_pu(gCtrlHandle->estHandle);
+
+
+		CTRL_run(gCtrlHandle,gHalHandle,gHallBLDCHandle, &gAdcData,&gPwmData,iqAnglePu);
 	}
 
 
@@ -778,10 +769,7 @@ interrupt void timer1ISR(void)		//Low priority
             break;
         case 5:
             IOEXPAND_run(gIoexpandHandle);
-            if (IOEXPAND_getTripStatus(gIoexpandHandle))
-                DM_setHardwareFaultType(gdmHandle, FaultType_IoExpander);
-            else
-                DM_clrHardwareFaultType(gdmHandle, FaultType_IoExpander);
+
             break;
     }
 

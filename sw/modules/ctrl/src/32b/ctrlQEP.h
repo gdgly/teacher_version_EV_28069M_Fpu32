@@ -662,6 +662,14 @@ inline _iq CTRL_getSpd_int_ref_pu(CTRL_Handle handle)
 	return(TRAJ_getIntValue(pobj->trajHandle_spd));
 } // end of CTRL_getSpd_int_ref_pu() function
 
+inline void CTRL_setSpd_int_ref_pu(CTRL_Handle handle, _iq iqValue)
+{
+	CTRL_Obj *pobj = (CTRL_Obj *)handle;
+
+	TRAJ_setIntValue(pobj->trajHandle_spd, iqValue);
+} // end of CTRL_getSpd_int_ref_pu() function
+
+
 
 //! \brief     Gets the controller state
 //! \param[in] handle  The controller (CTRL) handle
@@ -1043,7 +1051,7 @@ inline void CTRL_resetCounter_traj(CTRL_Handle handle)
 void CTRL_run(CTRL_Handle handle,HAL_Handle halHandle,HALLBLDC_Handle hallBLDCHandle,
               const HAL_AdcData_t *pAdcData,
               HAL_PwmData_t *pPwmData,
-              uint32_t u32electricalAngle);
+			  _iq iqElectricalAnglePu);
 
 
 //! \brief     Runs the trajectory
@@ -2058,7 +2066,7 @@ inline void CTRL_runOnLine(CTRL_Handle handle,
 //! \param[in]  electricalAngle The electrical angle in Q24
 extern void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Handle hallBLDCHandle,
                            const HAL_AdcData_t *pAdcData,HAL_PwmData_t *pPwmData,
-                           uint32_t u32electricalAngle);
+						   _iq iqElectricalAnglePu);
 /*{
 	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
 

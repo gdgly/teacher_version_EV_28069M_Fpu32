@@ -192,7 +192,7 @@ void CTRL_getWaitTimes(CTRL_Handle handle,uint_least32_t *pu32WaitTimes)
 void CTRL_run(CTRL_Handle ctlHandle,HAL_Handle halHandle,HALLBLDC_Handle hallBLDCHandle,
               const HAL_AdcData_t *pAdcData,
               HAL_PwmData_t *pPwmData,
-              uint32_t u32electricalAngle)
+              _iq  iqElectricalAnglePu)
 {
 	uint_least16_t u16count_isr = CTRL_getCount_isr(ctlHandle);
 	uint_least16_t u16numIsrTicksPerCtrlTick = CTRL_getNumIsrTicksPerCtrlTick(ctlHandle);
@@ -226,7 +226,7 @@ void CTRL_run(CTRL_Handle ctlHandle,HAL_Handle halHandle,HALLBLDC_Handle hallBLD
 			if(EST_getState(pCtlObj->estHandle) >= EST_State_MotorIdentified)
             {
 				// run the online controller
-				CTRL_runOnLine_User(ctlHandle,halHandle,hallBLDCHandle, pAdcData,pPwmData,u32electricalAngle);
+				CTRL_runOnLine_User(ctlHandle,halHandle,hallBLDCHandle, pAdcData,pPwmData, iqElectricalAnglePu);
             }
 			else
             {
@@ -708,12 +708,10 @@ bool CTRL_updateState(CTRL_Handle handle)
 
 void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Handle hallBLDCHandle,
                            const HAL_AdcData_t *pAdcData,HAL_PwmData_t *pPwmData,
-                           uint32_t u32electricalAngle)
+                           _iq iqElectricalAnglePu)
 {
     CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
-
     _iq iqangle_pu;
-
     MATH_vec2 phasor;
 
     // run Clarke transform on current
@@ -731,11 +729,10 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
     //iqangle_pu = EST_getAngle_pu(pCtlObj->estHandle);
 
     // Update electrical angle from the sensor
-    iqangle_pu = u32electricalAngle; // org
+    iqangle_pu = iqElectricalAnglePu; // org
 
     // compute the sin/cos phasor
     CTRL_computePhasor(iqangle_pu,&phasor);
-
 
     // set the phasor in the Park transform
     PARK_setPhasor(pctlObj->parkHandle,&phasor);
@@ -881,10 +878,8 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
     {
         _iq iqangleComp_pu;
 
-
         // compensate angle delay
         iqangleComp_pu = CTRL_angleDelayComp(ctlHandle, iqangle_pu);
-
 
         // compute the sin/cos phasor
         CTRL_computePhasor(iqangleComp_pu,&phasor);
@@ -894,10 +889,8 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
    // set the phasor in the inverse Park transform
    IPARK_setPhasor(pctlObj->iparkHandle,&phasor);
 
-
    // run the inverse Park module
    IPARK_run(pctlObj->iparkHandle,CTRL_getVdq_out_addr(ctlHandle),CTRL_getVab_out_addr(ctlHandle));
-
 
    // run the space Vector Generator (SVGEN) module
    SVGEN_run(pctlObj->svgenHandle,CTRL_getVab_out_addr(ctlHandle),&(pPwmData->Tabc));
