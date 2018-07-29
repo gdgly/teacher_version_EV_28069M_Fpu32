@@ -70,9 +70,11 @@ extern "C" {
 #define LITTLE_DRIVER_48V	10
 #define LITTLE_DRIVER_48V2   11
 #define LITTLE_DRIVER_400V	12
+#define LITTLE_DRIVER_48V2_GaN    13
 
 //#define DRIVER LITTLE_DRIVER_48V
 #define DRIVER LITTLE_DRIVER_48V2
+//#define DRIVER LITTLE_DRIVER_48V2_GaN
 
 
 //#define DRIVER LITTLE_DRIVER_400V
@@ -113,6 +115,14 @@ extern "C" {
     #define USER_IQ_FULL_SCALE_VOLTAGE_V      (100.0)   //(450.0)   // 450.0 Example for hvkit_rev1p1 typical usage
     #define USER_ADC_FULL_SCALE_VOLTAGE_V     (100.0)       //(405.8)   //(390)      // 409.6 hvkit_rev1p1 voltage scaling
 
+#elif  (DRIVER == LITTLE_DRIVER_48V2_GaN)
+//! \brief Defines the maximum voltage at the input to the AD converter
+//! \brief The value that will be represented by the maximum ADC input (3.3V) and conversion (0FFFh)
+//! \brief Hardware dependent, this should be based on the voltage sensing and scaling to the ADC input
+    #define USER_IQ_FULL_SCALE_VOLTAGE_V      (100.0)   //(450.0)   // 450.0 Example for hvkit_rev1p1 typical usage
+    #define USER_ADC_FULL_SCALE_VOLTAGE_V     (100.0)       //(405.8)   //(390)      // 409.6 hvkit_rev1p1 voltage scaling
+
+
 #else
 	#define USER_IQ_FULL_SCALE_VOLTAGE_V      (450.0)	//(450.0)   // 450.0 Example for hvkit_rev1p1 typical usage
 	#define USER_ADC_FULL_SCALE_VOLTAGE_V       (385.0)	//(390)      // 409.6 hvkit_rev1p1 voltage scaling
@@ -137,6 +147,8 @@ extern "C" {
 #elif (DRIVER == LITTLE_DRIVER_48V)
 	#define USER_ADC_FULL_SCALE_CURRENT_A       (19.89)		//(19.89)     // 19.89 hvkit_rev1p1 current scaling
 #elif (DRIVER == LITTLE_DRIVER_48V2)
+    #define USER_ADC_FULL_SCALE_CURRENT_A       (19.89)     //(19.89)     // 19.89 hvkit_rev1p1 current scaling
+#elif (DRIVER == LITTLE_DRIVER_48V2_GaN)
     #define USER_ADC_FULL_SCALE_CURRENT_A       (19.89)     //(19.89)     // 19.89 hvkit_rev1p1 current scaling
 #else
 	#define USER_ADC_FULL_SCALE_CURRENT_A       (9.45)	// (10.31)	//(19.89)     // 19.89 hvkit_rev1p1 current scaling
@@ -185,13 +197,34 @@ extern "C" {
 	#define   V_C_offset    (0.2123)
 #elif (DRIVER == LITTLE_DRIVER_48V2)
 
-    #define   I_A_offset    (0.98757)    //(0.98002)   //(0.89878)   //(0.98997)
-    #define   I_B_offset    (0.98850)    //(0.94316)   //(0.93859)   //(0.99242)
-    #define   I_C_offset    (0.98225)    //(0.95917)   //(0.92815)   //(0.98669)
+//
+//    #define   I_A_offset    (0.98757)    //(0.98002)   //(0.89878)   //(0.98997)
+//    #define   I_B_offset    (0.98850)    //(0.94316)   //(0.93859)   //(0.99242)
+//    #define   I_C_offset    (0.98225)    //(0.95917)   //(0.92815)   //(0.98669)
+//
+//    #define   V_A_offset    (0.23958)    //(0.23992)   //(0.23847)   //(0.24069) for 48V
+//    #define   V_B_offset    (0.24116)    //(0.23908)   //(0.23751)   //(0.24279)
+//    #define   V_C_offset    (0.24099)    //(0.23896)   //(0.23742)   //(0.23861)
 
-    #define   V_A_offset    (0.23958)    //(0.23992)   //(0.23847)   //(0.24069) for 48V
-    #define   V_B_offset    (0.24116)    //(0.23908)   //(0.23751)   //(0.24279)
-    #define   V_C_offset    (0.24099)    //(0.23896)   //(0.23742)   //(0.23861)
+//3kw motor driver (mos)
+    #define   I_A_offset    (0.9779593945)//(0.9765767455)
+    #define   I_B_offset    (0.9773409367)//(0.9786725044)
+    #define   I_C_offset    (0.9786795378)//(0.9721300006)
+
+    #define   V_A_offset    (0.2458603978)//(0.2410848141)
+    #define   V_B_offset    (0.2456358075)//(0.2434397936)
+    #define   V_C_offset    (0.2461646199)//(0.2393360138)
+
+#elif (DRIVER == LITTLE_DRIVER_48V2_GaN)
+
+
+    #define   I_A_offset    (0.9653493166)
+    #define   I_B_offset    (0.9277952909)
+    #define   I_C_offset    (0.9368468523)
+
+    #define   V_A_offset    (0.2411375642)
+    #define   V_B_offset    (0.2402585745)
+    #define   V_C_offset    (0.2397896647)
 
 #else
 //! \brief ADC current offsets for A, B, and C phases
@@ -374,6 +407,9 @@ extern "C" {
 #elif (DRIVER == LITTLE_DRIVER_48V2)
     #define USER_VOLTAGE_FILTER_POLE_Hz   (482.3)     //(372.5)   // 1/(2*pi*100n*3.3k)
 
+#elif (DRIVER == LITTLE_DRIVER_48V2_GaN)
+    #define USER_VOLTAGE_FILTER_POLE_Hz   (482.3)     //(372.5)   // 1/(2*pi*100n*3.3k)
+
 #else
 	#define USER_VOLTAGE_FILTER_POLE_Hz   (338)		//(372.5)   // 372.5, value for hvkit_rev1p1 hardware
 #endif
@@ -422,6 +458,7 @@ extern "C" {
 #define BL120S25_250W               105
 #define RICH_MOTOR                  110
 #define My_Motor                    111
+#define BL90L48F8B00145500          112
 
 
 // IPM motors
@@ -440,10 +477,12 @@ extern "C" {
 #define Oriental_4IK25A_SH_230      308
 #define Dayton_2N865T               309
 
+
 //! \brief Uncomment the motor which should be included at compile
 //! \brief These motor ID settings and motor parameters are then available to be used by the control system
 //! \brief Once your ideal settings and parameters are identified update the motor section here so it is available in the binary code
-#define USER_MOTOR BL120S25_250W
+//#define USER_MOTOR BL120S25_250W
+#define USER_MOTOR BL90L48F8B00145500
 //#define USER_MOTOR DELTA_C30604
 //#define USER_MOTOR CS60
 //#define USER_MOTOR RICH_MOTOR
@@ -477,6 +516,25 @@ extern "C" {
 #define USER_MOTOR_MAX_CURRENT          (1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
 #define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
 #define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder	//2500
+
+
+#elif (USER_MOTOR == BL90L48F8B00145500)
+
+#define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
+#define USER_MOTOR_NUM_POLE_PAIRS       (4)            // PAIRS, not total poles. Used to calculate user RPM from rotor Hz only
+#define USER_MOTOR_Rr                   (NULL)         // Induction motors only, else NULL
+#define USER_MOTOR_Rs                   (0.043804694)//(0.03246877)//(0.0275586) //(1.55)    (2.76)             // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
+#define USER_MOTOR_Ls_d                 (0.000129100255)//(0.00013939463)//(0.000043478) //(0.00671) (0.00361) // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_Ls_q                 (0.000129100255)//(0.00013939463)//(0.000043478) //(0.00671)  // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_RATED_FLUX           (0.0722953454)//(0.072257)   //(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)  //(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
+#define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
+
+#define USER_MOTOR_RES_EST_CURRENT      (1.5)//(0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+#define USER_MOTOR_IND_EST_CURRENT      (-1.5)//(-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+#define USER_MOTOR_MAX_CURRENT          (8)//(1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated//-->20*60/(4polepairs)=300rpm
+#define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder //2500
+
 
 #elif (USER_MOTOR == BL120S25_250W)
 

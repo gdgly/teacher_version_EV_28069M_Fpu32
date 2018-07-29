@@ -277,8 +277,8 @@ void main(void)
 	    _iq iqKi_Iq = _IQ(RoverLs_q*IsrPeriod_sec);
 
 
-	    HallBLDC_setSpeedFasttoBldcLowPu(gHallBLDCHandle,  _IQ(0.800*USER_MOTOR_NUM_POLE_PAIRS*1000.0/(USER_IQ_FULL_SCALE_FREQ_Hz * 60.0))); //400 rpm
-	    HallBLDC_setSpeedBldcToFastHighPu(gHallBLDCHandle,  _IQ(1.20*USER_MOTOR_NUM_POLE_PAIRS*1000.0/(USER_IQ_FULL_SCALE_FREQ_Hz * 60.0)));    //750 rpm
+	    HallBLDC_setSpeedFasttoBldcLowPu(gHallBLDCHandle,  _IQ(0.800*USER_MOTOR_NUM_POLE_PAIRS*1000.0/(USER_IQ_FULL_SCALE_FREQ_Hz * 60.0))); //800 rpm
+	    HallBLDC_setSpeedBldcToFastHighPu(gHallBLDCHandle,  _IQ(1.20*USER_MOTOR_NUM_POLE_PAIRS*1000.0/(USER_IQ_FULL_SCALE_FREQ_Hz * 60.0)));    //1200 rpm
 	    HallBLDC_setHallSpeedScale(gHallBLDCHandle, USER_SYSTEM_FREQ_MHz*1000000*100/6);
 	    HallBLDC_setSpeed0p01hzToPuSf(gHallBLDCHandle, _IQ((float_t)0.01/(USER_IQ_FULL_SCALE_FREQ_Hz)));
 	    HallBLDC_setPwmCntMax(gHallBLDCHandle, 5000);
@@ -420,9 +420,6 @@ void main(void)
 
  	for(;;)
  	{
-
-
-
 	  while(!(gMotorVars.bFlag_enableSys));
 	  HAL_enablePwm(gHalHandle);
 
@@ -430,6 +427,14 @@ void main(void)
 		  CTL_LOOP_e cltLoop = DM_getCtlLoop(gdmHandle);
 		  bool bResult = !(cltLoop == CTL_Current_Loop);
 		  CTRL_setFlag_enableSpeedCtrl(gCtrlHandle, bResult);
+	  }
+
+	  {
+		  CTL_METHOD_e ctlMethod = DM_getCtlMethod(gdmHandle);
+		  if (ctlMethod ==CTL_MIX_BLDC)
+			  HallBLDC_setEnableStartup(gHallBLDCHandle, true);
+		  else
+			  HallBLDC_setEnableStartup(gHallBLDCHandle, false);
 	  }
 
 	  // loop while the enable system flag is true
@@ -455,7 +460,7 @@ void main(void)
 			  bool bflag_ctrlStateChanged = CTRL_updateState(gCtrlHandle);
 			  CTRL_setFlag_enableCtrl(gCtrlHandle, gMotorVars.bFlag_Run_Identify);
 
-			  if(bflag_ctrlStateChanged)
+			  if (bflag_ctrlStateChanged)
               {
 				  CTRL_State_e ctrlState = CTRL_getState(gCtrlHandle);
 
@@ -481,7 +486,7 @@ void main(void)
 						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,1,_IQ(V_B_offset));
 						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,2,_IQ(V_C_offset));*/
 
-						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,0,_IQ(gdmObj.u16VBias1/1000.));
+						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,0,_IQ(gdmObj.u16VBias1/1000.));		//Point3
 						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,1,_IQ(gdmObj.u16VBias2/1000.));
 						  HAL_setBias(gHalHandle,HAL_SensorType_Voltage,2,_IQ(gdmObj.u16VBias3/1000.));
 
@@ -508,6 +513,7 @@ void main(void)
 				  else if(ctrlState == CTRL_State_Idle)
                   {
 					  HAL_disablePwm(gHalHandle);
+					  //gPwmData.Tabc.aiqValue[0]=gPwmData.Tabc.aiqValue[1]=gPwmData.Tabc.aiqValue[2] = 0;
 					  gMotorVars.bFlag_Run_Identify = false;
                   }
 
@@ -755,7 +761,7 @@ interrupt void timer1ISR(void)		//Low priority
     DM_run(gdmHandle,&gAdcData, EST_getFm_pu(gpCtlObj->estHandle), gpCtlObj->pidHandle_Iq->iqfbackValue, ENC_getSpeedKRPM(gEncHandle));
     Throttle_run(gThrottleHandle,gAdcData.iqExtAdc[0]);
 
-    u8Index = (u8Index+1) & 0x0007;
+    u8Index = (u8Index+1) & 0x0003;
     switch (u8Index)
     {
         case 0:
@@ -767,7 +773,7 @@ interrupt void timer1ISR(void)		//Low priority
         case 2:
             SCIMessageMaster_run(gSciMessageHandle[1]);
             break;
-        case 5:
+        case 3:
             IOEXPAND_run(gIoexpandHandle);
 
             break;

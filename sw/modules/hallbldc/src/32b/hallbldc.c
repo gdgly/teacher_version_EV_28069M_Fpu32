@@ -370,7 +370,9 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
 {
     HALLBLDC_Obj *pHallBldcObj = (HALLBLDC_Obj *)handleBldc;
     HAL_Obj *pHalObj = ( HAL_Obj  *) halHandle;
+
     int_least8_t i8Hall_PwmState = gai8Hall_PwmIndex[pHallBldcObj->u8Hall_State];
+    //iqPwmDuty = _IQ(0.1);
 
     switch (i8Hall_PwmState) //   i8PwmState)
     {

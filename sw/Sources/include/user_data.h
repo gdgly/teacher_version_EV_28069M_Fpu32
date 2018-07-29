@@ -76,6 +76,7 @@ typedef enum
 	CTL_FOC_w_Encoder1 = 1,
 	CTL_FOC_w_Encoder2 = 2,
 	CTL_FOC_w_Hall1 =3,
+	CTL_MIX_BLDC = 4
 } CTL_METHOD_e;
 
 typedef enum
@@ -275,6 +276,7 @@ typedef struct _DM_Obj_
 	STOP_SELECTION_e        stopSelect;
 	int16_t                 i16RefFreqHz, i16RefCurrent;
 	uint16_t                u16OutputTerm, u16AccTime;
+	uint16_t				u16BLDC2FOCSpeed, u16FOC2BLDCSpeed;
 	uint16_t				u16DCBusMax, u16DCBusMin, u16CurrentMax;		//point0, point0, point1
 
 	uint16_t				u16VBias1, u16VBias2, u16VBias3;		//Point3
@@ -286,11 +288,22 @@ typedef struct _DM_Obj_
 	uint16_t				u16MotorLd, u16MotorLq;		//Point4
 	uint16_t				u16RatedFlux,u16MagnetCur;	//
 
+	uint16_t				u16Kp_Speed, u16Ki_Speed,
+							u16Kp_Id, u16Ki_Id, u16Kp_Iq, u16Ki_Iq, u16Kp_BLDC, u16Ki_BLDC;
 
-#define USER_MOTOR_RES_EST_CURRENT      (0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
-#define USER_MOTOR_IND_EST_CURRENT      (-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
-#define USER_MOTOR_MAX_CURRENT          (18)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
-#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)
+
+//
+//#define USER_MOTOR_RES_EST_CURRENT      (0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+//#define USER_MOTOR_IND_EST_CURRENT      (-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+//#define USER_MOTOR_MAX_CURRENT          (18)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+//#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)
+
+#define USER_MOTOR_RES_EST_CURRENT      (1.5)//(0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+#define USER_MOTOR_IND_EST_CURRENT      (-1.5)//(-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+#define USER_MOTOR_MAX_CURRENT          (8)//(1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated//-->20*60/(4polepairs)=300rpm
+
+
 
 } DM_Obj;
 
@@ -700,6 +713,21 @@ extern void DM_setCallbackIndAxisD(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackIndAxisQ(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackRatedFlux(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackMagnetCur(DM_Handle handle, const DM_Cell *pdmCell);
+
+extern void DM_setCallbackKpSpeed(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKiSpeed(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKp_Id(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKi_Id(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKp_Iq(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKi_Iq(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKp_BLDC(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackKi_BLDC(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackBLDCtoFOC(DM_Handle handle, const DM_Cell *pdmCell);
+extern void DM_setCallbackFOCtoBLDC(DM_Handle handle, const DM_Cell *pdmCell);
+
+
+
+
 
 #ifdef __cplusplus
 }

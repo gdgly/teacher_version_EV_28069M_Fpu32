@@ -590,7 +590,6 @@ bool CTRL_updateState(CTRL_Handle handle)
     	  // reset the counter
           CTRL_resetCounter_state(handle);
 
-
           if(ctrlState == CTRL_State_OnLine)
           {
               CTRL_Obj *pCtlObj = (CTRL_Obj *)handle;
@@ -737,10 +736,8 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
     // set the phasor in the Park transform
     PARK_setPhasor(pctlObj->parkHandle,&phasor);
 
-
     // run the Park transform
     PARK_run(pctlObj->parkHandle,CTRL_getIab_in_addr(ctlHandle),CTRL_getIdq_in_addr(ctlHandle));
-
 
     // when appropriate, run the PID speed controller
     if(CTRL_doSpeedCtrl(ctlHandle))
@@ -758,9 +755,10 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
         PID_setMinMax(pctlObj->pidHandle_spd,iqoutMin,iqoutMax);
         PID_run_spd(pctlObj->pidHandle_spd,iqrefValue,iqfbackValue,CTRL_getSpd_out_addr(ctlHandle));
 
-        /*if (HallBLDC_getDoBLDC(hallBLDCHandle))
+   /*     if (HallBLDC_getDoBLDC(hallBLDCHandle))
         {
-            HALLBLDC_Ctrl_PwmSet(halHandle,hallBLDCHandle,CTRL_getSpd_out_pu(ctlHandle),pPwmData);
+
+            HALLBLDC_Ctrl_PwmSet(halHandle,hallBLDCHandle,CTRL_getSpd_out_pu(ctlHandle)/10,pPwmData);
             return;
         }*/
      }
@@ -784,9 +782,19 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             PID_Handle pidHandle;
 
             _iq iqSpeedKrpm = _IQmpy(HallBLDC_getSpeedPu(hallBLDCHandle),EST_get_pu_to_krpm_sf(pctlObj->estHandle));
-            if(_IQabs(iqSpeedKrpm) < _IQ(0.2))      // 200 rpm
+
+            if(_IQabs(iqSpeedKrpm) < _IQ(0.15))      // 150 rpm
             {
-                iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle);
+            	if (CTRL_getFlag_enableSpeedCtrl(ctlHandle))
+            		iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/10;
+            	else
+            	{
+            		if (CTRL_getIq_ref_pu(ctlHandle) >= 0)
+            		   iqBLDCPwmDuty = _IQ(0.1);
+            		else
+            			iqBLDCPwmDuty = -_IQ(0.1);
+            	}
+
             }
             else
             {
@@ -794,7 +802,7 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
                 iqHall_BLDC_Is_fdb_pu = pAdcData->I.aiqValue[HallBLDC_getCurrentFdbIndex(hallBLDCHandle)];
                 //iqHall_BLDC_Is_ref_pu = pCtlObj->iqSpd_out;
                 iqHall_BLDC_Is_ref_pu =(CTRL_getFlag_enableSpeedCtrl(ctlHandle)) ?
-                                     CTRL_getSpd_out_pu(ctlHandle): CTRL_getIq_ref_pu(ctlHandle);
+                                     CTRL_getSpd_out_pu(ctlHandle)/10: CTRL_getIq_ref_pu(ctlHandle);
                 pidHandle = HallBLDC_getPIDHandle(hallBLDCHandle);
                 PID_setMinMax(pidHandle,-iqmaxVsMag,iqmaxVsMag);    // set the minimum and maximum values
                 //PID_setMinMax(pidHandle,_IQ(-0.2),_IQ(0.2));    // set
@@ -812,9 +820,7 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             // compute the Kp gain
             // Scale Kp instead of output to prevent saturation issues
             if(CTRL_getFlag_enableDcBusComp(ctlHandle))
-            {
                 iqKp_Id = _IQmpy(iqKp_Id,EST_getOneOverDcBus_pu(pctlObj->estHandle));
-            }
 
             PID_setKp(pctlObj->pidHandle_Id,iqKp_Id);
 
@@ -843,9 +849,7 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             // compute the Kp gain
             // Scale Kp instead of output to prevent saturation issues
             if(CTRL_getFlag_enableDcBusComp(ctlHandle))
-            {
                 iqKp_Iq = _IQmpy(iqKp_Iq,EST_getOneOverDcBus_pu(pctlObj->estHandle));
-            }
 
             PID_setKp(pctlObj->pidHandle_Iq,iqKp_Iq);
 

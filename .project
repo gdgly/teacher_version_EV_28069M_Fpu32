@@ -36,9 +36,9 @@
 			<locationURI>PROJECT_LOC/sw/drivers/cpu/src/32b/f28x/f2806x/CodeStartBranch.asm</locationURI>
 		</link>
 		<link>
-			<name>F28069M.ccxml</name>
+			<name>EV_28069M_Fpu32.ccxml</name>
 			<type>1</type>
-			<location>C:/Users/A/ti/CCSTargetConfigurations/F28069M.ccxml</location>
+			<location>C:/Users/A/ti/CCSTargetConfigurations/EV_28069M_Fpu32.ccxml</location>
 		</link>
 		<link>
 			<name>IQmath_fpu32.lib</name>
