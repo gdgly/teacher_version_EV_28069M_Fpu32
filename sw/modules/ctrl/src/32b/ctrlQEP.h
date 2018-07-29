@@ -1446,7 +1446,47 @@ inline void CTRL_setMotorParams(CTRL_Handle handle,
 
 } // end of CTRL_setMotorParams() function
 
+/*inline MOTOR_Type_e CTR_getMotorType(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.type;
+}*/
 
+inline uint_least16_t CTRL_getMotorPolePairs(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.u16numPolePairs;
+}
+
+/*inline float_t CTRL_getMotorRatedFlux(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.fratedFlux_VpHz;
+}*/
+
+inline float_t CTRL_getMotorLs_d_H(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.fLs_d_H;
+}
+
+inline float_t CTRL_getMotorLs_q_H(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.fLs_q_H;
+}
+
+inline float_t CTRL_getMotorRr_Ohm(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.fRr_Ohm;
+}
+
+inline float_t CTRL_getMotorRs_Ohm(CTRL_Handle ctlHandle)
+{
+	CTRL_Obj *pctlObj = (CTRL_Obj *)ctlHandle;
+	return pctlObj->motorParams.fRs_Ohm;
+}
 //! \brief      Sets the controller parameters
 //! \details    This function allows for updates in scale factors during real-time
 //!             operation of the controller.

@@ -180,11 +180,18 @@ extern void HallBLDC_setEnableBldc(HALLBLDC_Handle hallBLDChandle, bool bHall_Fl
 
 
 extern void HALLBLDC_setHallHandle(HALLBLDC_Handle hallBLDChandle, HAL_Handle hallHandle);
+
 extern void HALLBLDC_Ctrl_Run(CTRL_Handle ctlHandle, HAL_Handle halHandle,HALLBLDC_Handle handleBldc);
 
 //extern _iq HallBLDC_getSpeedPu(HALLBLDC_Handle hallBLDChandle);
 //extern bool HallBLDC_getDoBLDC(HALLBLDC_Handle hallBLDChandle);
 //extern uint_least8_t HallBLDC_getCurrentFdbIndex(HALLBLDC_Handle hallBLDChandle);
+
+inline PID_Handle HallBLDC_getPIDHandle(HALLBLDC_Handle hallBLDChandle)
+{
+	HALLBLDC_Obj *pHallBldcObj = (HALLBLDC_Obj *)hallBLDChandle;
+	return pHallBldcObj->pidHandle_Bldc;
+}
 
 inline _iq HallBLDC_getSpeedPu(HALLBLDC_Handle hallBLDChandle)
 {
@@ -205,11 +212,6 @@ inline uint_least8_t HallBLDC_getCurrentFdbIndex(HALLBLDC_Handle hallBLDChandle)
 }
 
 
-inline PID_Handle HallBLDC_getPIDHandle(HALLBLDC_Handle hallBLDChandle)
-{
-    HALLBLDC_Obj *pHallBldcObj = (HALLBLDC_Obj *)hallBLDChandle;
-    return pHallBldcObj->pidHandle_Bldc;
-}
 //! \brief     Runs the hall bldc module for hall inputs
 //! \param[in] handle  The hall bldc handle
 //! \param[in] hallState     The hall state 1 thru 6, A phase hall is MSB, C phase hall is LSB

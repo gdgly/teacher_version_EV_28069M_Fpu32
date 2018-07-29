@@ -132,6 +132,8 @@
                          _IQ(0.0), \
                          _IQ(0.0), \
                          _IQ(0.0), \
+						 _IQ(0.0), \
+						 _IQ(0.0), \
                          _IQ(0.0), \
                          _IQ(0.9 * USER_MAX_VS_MAG_PU), \
                          _IQ(0.0), \
@@ -190,8 +192,11 @@ typedef struct _MOTOR_Vars_t_
   _iq iqKp_spd;
   _iq iqKi_spd;
 
-  _iq iqKp_Idq;
-  _iq iqKi_Idq;
+  _iq iqKp_Id;
+  _iq iqKi_Id;
+
+  _iq iqKp_Iq;
+  _iq iqKi_Iq;
 
   _iq iqVd;
   _iq iqVq;

@@ -314,39 +314,7 @@ void HALLBLDC_Ctrl_Run(CTRL_Handle ctlHandle, HAL_Handle halHandle,HALLBLDC_Hand
     }
 
 }
-/*
-void HALLBLDC_Ctrl_PID(CTRL_Handle ctlHandle, HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
-                       const HAL_AdcData_t *pAdcData, HAL_PwmData_t *pPwmData)
-{
-    HALLBLDC_Obj *pHallBldcObj = (HALLBLDC_Obj *)handleBldc;
-    HAL_Obj *pHallObj = ( HAL_Obj  *) halHandle;
-    CTRL_Obj *pCtlObj = (CTRL_Obj *) ctlHandle;
-    if (pHallBldcObj->bHall_Flag_EnableBldc)
-    {
-         //pHallBldcObj->iqAngle_pu = iqAngle_est_pu;
-         pHallBldcObj->iqSpeed_pu = pHallBldcObj->iqHall_speed_fdb_pu;
 
-         //int_least8_t i8Hall_PwmState = gai8Hall_PwmIndex[pHallBldcObj->u8Hall_State];
-
-         if (CTRL_getFlag_enableSpeedCtrl(ctlHandle) == false)    //Torque Control Mode
-         {
-             _iq iqHall_BLDC_Is_fdb_pu, iqHall_BLDC_Is_ref_pu;
-             iqHall_BLDC_Is_fdb_pu = pAdcData->I.aiqValue[pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb];
-             iqHall_BLDC_Is_ref_pu = pCtlObj->iqSpd_out;
-
-             //PID_run_spd(pObj->pidHandle_spd,iqrefValue,iqfbackValue,CTRL_getSpd_out_addr(handle));
-             // BLDC current loop
-             PID_run(pHallBldcObj->pidHandle_Bldc ,iqHall_BLDC_Is_ref_pu,iqHall_BLDC_Is_fdb_pu,&giqHall_PwmDuty);
-             HALLBLDC_Ctrl_PwmSet( handleBldc, halHandle,giqHall_PwmDuty,pPwmData);
-          }
-          else                                    // Speed Control Mode
-          {
-             giqHall_PwmDuty = pCtlObj->iqSpd_out;
-             HALLBLDC_Ctrl_PwmSet(handleBldc, halHandle,giqHall_PwmDuty,pPwmData);
-          }
-    }
-}
-*/
 //! \brief
 void HALLBLDC_Ctrl_Stop(CTRL_Handle ctlHandle,HALLBLDC_Handle handleBldc)
 {

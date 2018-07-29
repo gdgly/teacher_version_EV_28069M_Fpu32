@@ -44,41 +44,14 @@
 #include "include/user_data.h"
 #include "include/sci_operator.h"
 #include "include/main.h"
-#include "sw/modules/throttle/src/32b/throttle.h"
+
 //#include "sw/modules/hal/boards/hvkit_rev1p1/f28x/f2806x/src/hal.h"
 
-#define	VERSION	1806
+#define	VERSION	1807
 
 #define HAL_Gpio_DriveEnable    GPIO_Number_24
 
-extern USER_Params gUserParams;
-extern HAL_PwmData_t gPwmData;
-extern HALLBLDC_Obj  gHallBLDCObj;
-
-extern CTRL_Obj *gpCtlObj;
-extern CTRL_Handle 		gCtrlHandle;
-
-extern Throttle_Obj        gThrottleObj;
-extern Throttle_Handle     gThrottleHandle;
-
 extern MOTOR_Vars_t         gMotorVars;
-extern HAL_AdcData_t        gAdcData;
-
-extern HAL_Handle 		    gHalHandle;
-extern IOEXPAND_Handle 	    gIoexpandHandle;
-
-extern ENC_Handle          gEncHandle;
-
-extern HALLBLDC_Handle     gHallBLDCHandle;
-
-//extern IOEXPAND23017_Obj 	gIoexpandObj;
-
-#ifdef FAST_ROM_V1p6
-extern CTRL_Obj *gpCtlObj;
-#else
-extern CTRL_Obj ctrl;				//v1p7 format
-#endif
-
 
 #define MAX_DESCRIPTION_LENGTH		17
 uint16_t g_u16Reserved;
@@ -131,7 +104,7 @@ const DM_Cell g_dmCellCtlLoop       = {&gdmObj.ctlLoop, 0x10, 0x0023,
 const DM_Cell g_dmCellCtlMethod  	= {&gdmObj.ctlMethod, 0x12, 0x0024,
 										0x0000,0x0004, 0x0000,
 										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 | DM_ATTRIBUTE_Point0,
-										DM_UNIT_None, NULL, NULL};
+										DM_UNIT_None, NULL, DM_setCallbackCtlLoop};
 
 const DM_Cell g_dmCellCurrentRef  	= {&gdmObj.i16RefCurrent, I2C_ADDRESS_INVALID, 0x0025,
 										0x0000,0x7fff, 0x8000,
@@ -332,7 +305,7 @@ const DM_Function* g_dmFunUArray[] = {&g_dmFunU1, &g_dmFunU2};
 //										0x0000,0x0001, 0x0000,
 //										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 | DM_ATTRIBUTE_Point0,
 //										DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellAccessLvl  	= {&gdmObj.operatorAccess, 0x12, 0x0101,
+const DM_Cell g_dmCellAccessLvl  	= {&gdmObj.operatorAccess, 0x1A, 0x0101,
 										0x0004,0x0004, 0x0000,
 										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 | DM_ATTRIBUTE_Point0,
 										DM_UNIT_None, NULL, NULL};
@@ -418,7 +391,7 @@ const DM_Cell g_dmCellDCBusMin  = {&gdmObj.u16DCBusMin, 0x32, 0x0201,
 const DM_Cell g_dmCellCurrentMax  = {&gdmObj.u16CurrentMax, 0x34, 0x0202,
 									20,600, 5,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point1,
-									DM_UNIT_Volt, NULL, NULL};
+									DM_UNIT_Amp, NULL, NULL};
 
 
 
@@ -446,15 +419,15 @@ const DM_Function* g_dmFunbArray[] = {&g_dmFunb1, &g_dmFunb2, &g_dmFunb3, &g_dmF
 
 const DM_Function* g_dmFunbArray[] = {&g_dmFunb1, &g_dmFunb2 };
 
-const DM_Cell g_dmCellResEstCurrent  = {&gdmObj.u16ResEstCurrent, 0x30, 0x0200,
+const DM_Cell g_dmCellResEstCurrent  = {&gdmObj.i16ResEstCurrent, 0x30, 0x0200,
 									10,2000, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Amp, NULL, DM_setCallbackResEstCurrent};
-const DM_Cell g_dmCellIndEstCurrent  = {&gdmObj.u16IndEstCurrent, 0x32, 0x0201,
+const DM_Cell g_dmCellIndEstCurrent  = {&gdmObj.i16IndEstCurrent, 0x32, 0x0201,
 									(uint16_t)(-10),(uint16_t)(-1), (uint16_t)(-2000),
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Amp, NULL, DM_setCallbackIndEstCurrent};
-const DM_Cell g_dmCellFluxEstHz  = {&gdmObj.u16FluxEstHz, 0x34, 0x0202,
+const DM_Cell g_dmCellFluxEstHz  = {&gdmObj.i16FluxEstHz, 0x34, 0x0202,
 									200, 2000, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Hz, NULL, DM_setCallbackFluxEstHz};
@@ -520,27 +493,33 @@ const DM_Cell g_dmCellPolePair  = {&gUserParams.u16motor_numPolePairs, 0x52, 0x0
 									4,50, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
 									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellResStator  = {&gdmObj.u16MotorRs, 0x54, 0x0252,
+
+const DM_Cell g_dmCellMaxCurrent  = {&gdmObj.i16MaxCurrent, 0x54, 0x0252,
+									180,500, 1,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
+									DM_UNIT_Amp, NULL, DM_setCallbackMaxCurrent};
+
+const DM_Cell g_dmCellResStator  = {&gdmObj.u16MotorRs, 0x56, 0x0253,
 									2924,40000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackResStator};
-const DM_Cell g_dmCellResRotor  = {&gdmObj.u16MotorRr, 0x56, 0x0253,
+const DM_Cell g_dmCellResRotor  = {&gdmObj.u16MotorRr, 0x58, 0x0254,
 									0,40000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackResRotor};
-const DM_Cell g_dmCellIndAxisD  = {&gdmObj.u16MotorLd, 0x58, 0x0254,
+const DM_Cell g_dmCellIndAxisD  = {&gdmObj.u16MotorLd, 0x5A, 0x0255,
 									3781,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_mHenry, NULL, DM_setCallbackIndAxisD};
-const DM_Cell g_dmCellIndAxisQ  = {&gdmObj.u16MotorLq, 0x5A, 0x0255,
+const DM_Cell g_dmCellIndAxisQ  = {&gdmObj.u16MotorLq, 0x5C, 0x0256,
 									3781,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_mHenry, NULL, DM_setCallbackIndAxisQ};
-const DM_Cell g_dmCellRatedFlux  = {&gdmObj.u16RatedFlux, 0x5C, 0x0256,
+const DM_Cell g_dmCellRatedFlux  = {&gdmObj.u16RatedFlux, 0x5E, 0x0257,
 									1162,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackRatedFlux};
-const DM_Cell g_dmCellMagnetCur  = {&gdmObj.u16MagnetCur, 0x5E, 0x0257,
+const DM_Cell g_dmCellMagnetCur  = {&gdmObj.u16MagnetCur, 0x60, 0x0258,
 									0,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackMagnetCur};
@@ -550,48 +529,51 @@ const DM_Cell g_dmCellMagnetCur  = {&gdmObj.u16MagnetCur, 0x5E, 0x0257,
 
 const DM_FunCell g_dmFunCellD1_01 	= {&g_dmCellMotorType,  1, "Motor Type",&g_ai8DescMotorType[0][0]};
 const DM_FunCell g_dmFunCellD1_02 	= {&g_dmCellPolePair,  2, "Pole Pairs",NULL};
-const DM_FunCell g_dmFunCellD1_03 	= {&g_dmCellResStator,  3, "Stator Resist",NULL};
-const DM_FunCell g_dmFunCellD1_04 	= {&g_dmCellResRotor,  4, "Rotor Resist",NULL};
-const DM_FunCell g_dmFunCellD1_05 	= {&g_dmCellIndAxisD,  5, "Ind D-axis",NULL};
-const DM_FunCell g_dmFunCellD1_06 	= {&g_dmCellIndAxisQ,  6, "Ind Q-axis",NULL};
-const DM_FunCell g_dmFunCellD1_07 	= {&g_dmCellRatedFlux, 7, "Rated Flux",NULL};
-const DM_FunCell g_dmFunCellD1_08 	= {&g_dmCellMagnetCur, 8, "Magnetic Cur",NULL};
+const DM_FunCell g_dmFunCellD1_03 	= {&g_dmCellMaxCurrent,  3, "Max Current",NULL};
+
+const DM_FunCell g_dmFunCellD1_04 	= {&g_dmCellResStator,  4, "Stator Resist",NULL};
+const DM_FunCell g_dmFunCellD1_05 	= {&g_dmCellResRotor,  5, "Rotor Resist",NULL};
+const DM_FunCell g_dmFunCellD1_06 	= {&g_dmCellIndAxisD,  6, "Ind D-axis",NULL};
+const DM_FunCell g_dmFunCellD1_07 	= {&g_dmCellIndAxisQ,  7, "Ind Q-axis",NULL};
+const DM_FunCell g_dmFunCellD1_08 	= {&g_dmCellRatedFlux, 8, "Rated Flux",NULL};
+const DM_FunCell g_dmFunCellD1_09 	= {&g_dmCellMagnetCur, 9, "Magnetic Cur",NULL};
 
 const DM_FunCell* g_dmFunCellArrayD1[] = {&g_dmFunCellD1_01, &g_dmFunCellD1_02, &g_dmFunCellD1_03, &g_dmFunCellD1_04,
-										  &g_dmFunCellD1_05, &g_dmFunCellD1_06, &g_dmFunCellD1_07, &g_dmFunCellD1_08};
+										  &g_dmFunCellD1_05, &g_dmFunCellD1_06, &g_dmFunCellD1_07, &g_dmFunCellD1_08,
+										  &g_dmFunCellD1_09};
 
 
-const DM_Function g_dmFunD1 ={&g_dmFunCellArrayD1[0], 8, "d1","Motor"};
+const DM_Function g_dmFunD1 ={&g_dmFunCellArrayD1[0], 9, "d1","Motor"};
 
-const DM_Cell g_dmCellKp_Speed  = {&gdmObj.u16Kp_Speed, 0x60, 0x0300,
+const DM_Cell g_dmCellKp_Speed  = {&gdmObj.u16Kp_Speed, 0x70, 0x0300,
 									6000,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKpSpeed};
-const DM_Cell g_dmCellKi_Speed  = {&gdmObj.u16Ki_Speed, 0x62, 0x0301,
+const DM_Cell g_dmCellKi_Speed  = {&gdmObj.u16Ki_Speed, 0x72, 0x0301,
 									30,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKiSpeed};
-const DM_Cell g_dmCellKp_Id  = {&gdmObj.u16Kp_Id, 0x64, 0x0302,
+const DM_Cell g_dmCellKp_Id  = {&gdmObj.u16Kp_Id, 0x74, 0x0302,
 									100,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKp_Id};
-const DM_Cell g_dmCellKi_Id  = {&gdmObj.u16Ki_Id, 0x66, 0x0303,
+const DM_Cell g_dmCellKi_Id  = {&gdmObj.u16Ki_Id, 0x76, 0x0303,
 									12,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKi_Id};
-const DM_Cell g_dmCellKp_Iq  = {&gdmObj.u16Kp_Iq, 0x68, 0x0304,
+const DM_Cell g_dmCellKp_Iq  = {&gdmObj.u16Kp_Iq, 0x78, 0x0304,
 									1,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKp_Iq};
-const DM_Cell g_dmCellKi_Iq  = {&gdmObj.u16Ki_Iq, 0x6a, 0x0305,
+const DM_Cell g_dmCellKi_Iq  = {&gdmObj.u16Ki_Iq, 0x7a, 0x0305,
 									12,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKi_Iq};
-const DM_Cell g_dmCellKp_BLDC  = {&gdmObj.u16Kp_BLDC, 0x6c, 0x0306,
+const DM_Cell g_dmCellKp_BLDC  = {&gdmObj.u16Kp_BLDC, 0x7c, 0x0306,
 									340,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKp_BLDC};
-const DM_Cell g_dmCellKi_BLDC  = {&gdmObj.u16Ki_BLDC, 0x6e, 0x0307,
+const DM_Cell g_dmCellKi_BLDC  = {&gdmObj.u16Ki_BLDC, 0x7e, 0x0307,
 									39,50000, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKi_BLDC};
@@ -611,12 +593,29 @@ const DM_FunCell* g_dmFunCellArrayD2[] = {&g_dmFunCellD2_01, &g_dmFunCellD2_02, 
 const DM_Function g_dmFunD2 ={&g_dmFunCellArrayD2[0], 8, "d2","PID"};
 
 
+const DM_Cell g_dmCellFactory  = {&gdmObj.u8FactorySetting, NULL, 0x0310,
+									0,1, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
+									DM_UNIT_None, NULL, NULL};
+const DM_Cell g_dmCellMotorModel  = {&gdmObj.u16ModelIndex, 0x80, 0x0311,
+									0,5, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
+									DM_UNIT_None, NULL, DM_setCallbackMotorModel};
+
+const char g_ai8DescFactory[][MAX_DESCRIPTION_LENGTH]={"No","Yes"};
+const char g_ai8DescModel[][MAX_DESCRIPTION_LENGTH]={"SDCQ BL129S25"," Delta C30604E", "EMJ_04APB22", "QSMotor 3KW", "QSMotor 1.5KW"};
+
+const DM_FunCell g_dmFunCellD3_01 	= {&g_dmCellFactory,  1, "Factory",&g_ai8DescFactory[0][0]};
+const DM_FunCell g_dmFunCellD3_02 	= {&g_dmCellMotorModel, 2, "Model",&g_ai8DescModel[0][0]};
+
+const DM_FunCell* g_dmFunCellArrayD3[] = {&g_dmFunCellD3_01, &g_dmFunCellD3_02};
+const DM_Function g_dmFunD3 ={&g_dmFunCellArrayD3[0], 2, "d3","Restore Paras"};
+
+const DM_Function* g_dmFunDArray[] = {&g_dmFunD1 , &g_dmFunD2, &g_dmFunD3};
 
 
 
 
-
-const DM_Function* g_dmFunDArray[] = {&g_dmFunD1 , &g_dmFunD2};
 
 /*
 const DM_FunCell g_dmFunCellC1_01 	= {&g_dmCellDCBusMax,  1, "DC-Bus Max",NULL};
@@ -735,7 +734,7 @@ const DM_Group		g_dmGroupU 	={&g_dmFunUArray[0], 2, "U", "Monitor"};
 const DM_Group		g_dmGroupA 	={&g_dmFunAArray[0], 2, "A", "Initialize"};
 const DM_Group		g_dmGroupb 	={&g_dmFunbArray[0], 2, "b","Application"};
 const DM_Group		g_dmGroupC 	={&g_dmFunCArray[0], 2, "C","Tuning"};
-const DM_Group		g_dmGroupD 	={&g_dmFunDArray[0], 2, "d","Setting"};
+const DM_Group		g_dmGroupD 	={&g_dmFunDArray[0], 3, "d","Setting"};
 
 /*const DM_Group		g_dmGroupC 	={&g_dmFunCArray[0], 8, "C","Tuning"};
 const DM_Group		g_dmGroupd 	={&g_dmFundArray[0], 5, "d","Reference"};
@@ -908,7 +907,7 @@ DM_Handle DM_init(const void *pMemory,const size_t numBytes)
     pdmObj->filterHandleOutCurrent = FILTER_init(&pdmObj->filterOutCurrent, sizeof(pdmObj->filterOutCurrent));
 
 
-    DM_setLocalRemoteMode(dmHandle, true);
+    DM_setLocalRemoteMode(dmHandle, false);	// initial at remote mode
     DM_setAutotuneMode(dmHandle, false);
     //DM_setHardwareFaultType(dmHandle,FaultType_NoFault );
     //DM_setInverterTripType(dmHandle, TripType_NoTrip);
@@ -967,9 +966,9 @@ void DM_run(DM_Handle dmHandle, HAL_AdcData_t *pAdcData, _iq iqOutFreq, _iq iqOu
 
 DM_TYPE_e getDMType(const DM_Cell *pDMCell);
 
-bool DM_TerminalStatus(uint_least8_t u8Terminal)    // Active Low
+bool DM_TerminalStatus(DM_Handle dmHandle, uint_least8_t u8Terminal)    // Active Low
 {
-    return ((~IOEXPAND_InputTermA(gIoexpandHandle)) & u8Terminal) ;
+    return ((~IOEXPAND_InputTermA(DM_getIoexpandHandle(dmHandle))) & u8Terminal) ;
 }
 
 /*bool DM_isRunStatus(DM_Handle dmHandle)
@@ -1896,8 +1895,11 @@ void DM_outFunction(DM_Handle dmHandle,
 _iq DM_getLocalFreqRef(DM_Handle dmHandle) // called by DM_runFreqRef()
 {
     DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-    _iq iqHz_to_krpm_sf = _IQ(60.0/USER_MOTOR_NUM_POLE_PAIRS/1000/100); // g_i16FreqRef/100 (Point2)
-    return _IQmpyI32( iqHz_to_krpm_sf, (long) pdmObj->i16RefFreqHz);
+
+    //_iq iqHz_to_krpm_sf = _IQ(60.0/USER_MOTOR_NUM_POLE_PAIRS/1000/100); // g_i16FreqRef/100 (Point2)
+    _iq iqHz_to_krpm_sf = _IQ(60.0/gUserParams.u16motor_numPolePairs/1000/100); // g_i16FreqRef/100 (Point2)
+
+     return _IQmpyI32( iqHz_to_krpm_sf, (long) pdmObj->i16RefFreqHz);
 }
 //------------------------------------------------------------------------
 _iq DM_getRemoteFreqRef(DM_Handle dmHandle)
@@ -1911,13 +1913,11 @@ _iq DM_getRemoteFreqRef(DM_Handle dmHandle)
 	           break;
 	     case REF_Terminal:
 	           {
-	        	   _iq Speed_pu;
-	                if (DM_TerminalStatus(DM_FOR_TERM1 ))	//Forward
-	                    Speed_pu = Throttle_getFilterResult(gThrottleHandle);
-	                else
-	                    Speed_pu = -Throttle_getFilterResult(gThrottleHandle);
+	        	   _iq Speed_pu = Throttle_getFilterResult(DM_getThrottleHandle(dmHandle));
 
-	                _iq Speed_pu_to_krpm_sf = EST_get_pu_to_krpm_sf(gpCtlObj->estHandle);
+	                if (!DM_TerminalStatus(dmHandle, DM_FOR_TERM1 ))	//Forward
+	                    Speed_pu *= -1;
+	                _iq Speed_pu_to_krpm_sf = EST_get_pu_to_krpm_sf(CTRL_getEstHandle(DM_getCtlHandle(dmHandle)));
 	                iqValue  = _IQmpy(Speed_pu,Speed_pu_to_krpm_sf);
 	                 break;
 	           }
@@ -1934,7 +1934,7 @@ _iq DM_getLocalCurrentRef(DM_Handle dmHandle)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	_iq iqAmp_sf = _IQ(1/100.); // g_i16FreqRef/100 (Point2)
-	return _IQmpyI32( iqAmp_sf, (long) pdmObj->i16RefCurrent);
+	return _IQmpyI32( iqAmp_sf, (long) pdmObj->i16RefCurrent);	//Amp
 }
 //------------------------------------------------------------------------
 _iq DM_getRemoteCurrentRef(DM_Handle dmHandle)
@@ -1948,11 +1948,9 @@ _iq DM_getRemoteCurrentRef(DM_Handle dmHandle)
 	           break;
 	     case REF_Terminal:
 	           {
-	        	   _iq Current_pu;
-	        	   	if ( DM_TerminalStatus(DM_FOR_TERM1 ))
-	        	   		 Current_pu = Throttle_getFilterResult(gThrottleHandle);
-	        	   	else
-	        	   		 Current_pu = -Throttle_getFilterResult(gThrottleHandle);
+	        	   _iq Current_pu = Throttle_getFilterResult(DM_getThrottleHandle(dmHandle));
+	        	   	if (! DM_TerminalStatus(dmHandle,DM_FOR_TERM1 ))
+	        	   		 Current_pu *= -1;
 	        	   	_iq Current_pu_to_amp_sf =  _IQ(USER_IQ_FULL_SCALE_CURRENT_A);	//  EST_get_pu_to_krpm_sf(gpCtlObj->estHandle);
 	        	   	iqValue  = _IQmpy(Current_pu,Current_pu_to_amp_sf);
 	        	   	break;
@@ -1983,7 +1981,9 @@ void DM_runRefLimit(DM_Handle dmHandle)
 	{
 		uint16_t u16DCBus;
 		u8DCBusCheckCnt =0;
-		u16DCBus = (uint16_t)  _IQmpyI32int(gAdcData.iqdcBus, USER_IQ_FULL_SCALE_VOLTAGE_V );
+		//u16DCBus = (uint16_t)  _IQmpyI32int(gAdcData.iqdcBus, USER_IQ_FULL_SCALE_VOLTAGE_V );
+		u16DCBus = (uint16_t)  _IQmpyI32int(gAdcData.iqdcBus, gUserParams.fFullScaleVoltage_V);
+
 
 		if (u16DCBus > pdmObj->u16DCBusMax)
 		{
@@ -2016,12 +2016,12 @@ void DM_runRefLimit(DM_Handle dmHandle)
 	{
 		u8IOTerminalCnt = 0;
 
-		if (IOEXPAND_getTripStatus(gIoexpandHandle))
+		if (IOEXPAND_getTripStatus(DM_getIoexpandHandle(dmHandle)))
 			DM_setInverterTripType(gdmHandle,TripType_EEProm );
 		else
 			DM_clrInverterTripType(gdmHandle,TripType_EEProm );
 
-		if (DM_TerminalStatus(DM_TRIP_TERM3 ))		//External Fault
+		if (DM_TerminalStatus(dmHandle, DM_TRIP_TERM3 ))		//External Fault
 		{
 			DM_setInverterTripType(gdmHandle,TripType_Extern );
 			DM_runEmergyStop(dmHandle);
@@ -2052,10 +2052,11 @@ void DM_FreeRun(DM_Handle dmHandle)
 {
 	gMotorVars.iqSpeedRef_krpm = 0;
 	gMotorVars.iqIqRef_A = 0;
-	HAL_setGpioHigh(gHalHandle, (GPIO_Number_e)HAL_Gpio_DriveEnable);
+	HAL_setGpioHigh(DM_getHalHandle(dmHandle), (GPIO_Number_e)HAL_Gpio_DriveEnable);
 	//gMotorVars.bFlag_enableSys = gMotorVars.bFlag_Run_Identify = false;		//?? Process correct ?
 	//if (DM_isFreqOutLowSpeed(dmHandle))
 	{
+		//HAL_disablePwm(DM_getHalHandle(dmHandle));
 		gMotorVars.bFlag_enableSys = false;
 		gPwmData.Tabc.aiqValue[0]=gPwmData.Tabc.aiqValue[1]=gPwmData.Tabc.aiqValue[2] = 0;
 
@@ -2094,7 +2095,7 @@ void DM_setTorqueRef(DM_Handle dmHandle)
 //------------------------------------------------------------------------
 void DM_setInputRef(DM_Handle dmHandle)
 {
-	if(CTRL_getFlag_enableSpeedCtrl(gCtrlHandle))
+	if(CTRL_getFlag_enableSpeedCtrl(DM_getCtlHandle(dmHandle)))
 	{	//Speed control
 		DM_setFreqRef(dmHandle);
 	}
@@ -2121,7 +2122,7 @@ void DM_runOperation(DM_Handle dmHandle)
 			          break;
 			case REF_Terminal:
 			{
-			   if (DM_TerminalStatus(DM_FOR_TERM1 | DM_REV_TERM2) )
+			   if (DM_TerminalStatus(dmHandle, DM_FOR_TERM1 | DM_REV_TERM2) )
 			       DM_setRunStatus(dmHandle);
 			   else
 			       DM_setStopStatus(dmHandle);
@@ -2136,7 +2137,7 @@ void DM_runOperation(DM_Handle dmHandle)
 	if (DM_isRunStatus(dmHandle))
 	{
 		//static uint_least8_t u8DelayCnt;
-	    HAL_setGpioLow(gHalHandle, (GPIO_Number_e)HAL_Gpio_DriveEnable);
+	    HAL_setGpioLow(DM_getHalHandle(dmHandle), (GPIO_Number_e)HAL_Gpio_DriveEnable);
 	    gMotorVars.bFlag_MotorIdentified = true;
     	gMotorVars.bFlag_enableUserParams = true;
 	    if (gMotorVars.bFlag_enableSys)
@@ -2146,7 +2147,7 @@ void DM_runOperation(DM_Handle dmHandle)
 	    }
 	    else
 	    {
-	    	CTRL_setParams(gCtrlHandle,&gUserParams);
+	    	CTRL_setParams(DM_getCtlHandle(dmHandle),&gUserParams);
 	    	gMotorVars.bFlag_enableSys = true;	// Start from Freerun
 	    }
 	}
@@ -2260,7 +2261,7 @@ void DM_outInverterTripName1(uint16_t u16TripType, char *pi8String)
 EST_State_e DM_getAutotuneState(DM_Handle dmHandle)
 {
 	EST_State_e estState;
-	estState = EST_getState(gpCtlObj->estHandle);
+	estState = EST_getState(CTRL_getEstHandle(DM_getCtlHandle(dmHandle)));	//gpCtlObj->estHandle);
 	return estState;
 
 }
@@ -2283,7 +2284,7 @@ void DM_autotunePrepStart(DM_Handle dmHandle)
 void DM_autotuneStart(DM_Handle dmHandle)
 {
 	//HAL_setGpioLow(gHalHandle, (GPIO_Number_e)HAL_Gpio_DriveEnable);
-	HAL_setGpioLow(gHalHandle, (GPIO_Number_e)HAL_Gpio_DriveEnable);
+	HAL_setGpioLow(DM_getHalHandle(dmHandle), (GPIO_Number_e)HAL_Gpio_DriveEnable);
 
 	gMotorVars.bFlag_enableSys = true;
 	gMotorVars.bFlag_Run_Identify = true;
@@ -2304,16 +2305,16 @@ bool DM_getRunIdentifySignal(DM_Handle dmHandle)
 	return gMotorVars.bFlag_Run_Identify;
 }
 
-void DM_changeCtlLoop(DM_Handle dmHandle)
+/*void DM_changeCtlLoop(DM_Handle dmHandle)
 {
 	DM_setStopStatus(dmHandle);
 	gMotorVars.bFlag_enableSys = false;
-}
+}*/
 
 void DM_setCallbackCtlLoop(DM_Handle dmHandle, const DM_Cell *pdmCell)		//XX.XX Hz
 {
-	DM_changeCtlLoop(dmHandle);
-
+	//DM_changeCtlLoop(dmHandle);
+	DM_runEmergyStop(dmHandle);
 }
 
 //------------------------------------------------------------------------
@@ -2372,16 +2373,17 @@ int32_t DM_getCallbackFreqOutHz(DM_Handle handle)	//XX.XX Hz Electric
 	{
 	    DM_Obj *pdmObj = (DM_Obj *) handle;
 	    _iq iqValue = FILTER_getValue(pdmObj->filterHandleOutFreq);
-		return (int32_t) _IQmpyI32int(iqValue, (long)(USER_IQ_FULL_SCALE_FREQ_Hz*100));
+		//return (int32_t) _IQmpyI32int(iqValue, (long)(USER_IQ_FULL_SCALE_FREQ_Hz*100));
+		return (int32_t) _IQmpyI32int(iqValue, gUserParams.fFullScaleFreq_Hz*100);
 	}
 	else
 		return 0;
 
 }
 
-int32_t DM_ConvtoKrpm(_iq iqValue)
+int32_t DM_ConvtoKrpm(DM_Handle dmHandle, _iq iqValuePu)
 {
-	_iq iqFreqOutKrpm = _IQmpy(iqValue, EST_get_pu_to_krpm_sf(gpCtlObj->estHandle));
+	_iq iqFreqOutKrpm = _IQmpy(iqValuePu, EST_get_pu_to_krpm_sf(CTRL_getEstHandle(DM_getCtlHandle(dmHandle))));	//gpCtlObj->estHandle));
 	return (int32_t) _IQmpyI32int(iqFreqOutKrpm, 1000);
 }
 
@@ -2390,38 +2392,38 @@ int32_t DM_getCallbackFreqOutRpm(DM_Handle handle)	//XXXX RPM
 	if (gMotorVars.bFlag_Run_Identify)
 	{
 	    DM_Obj *pdmObj = (DM_Obj *) handle;
-	    _iq iqValue = FILTER_getValue(pdmObj->filterHandleOutFreq);
-	    return DM_ConvtoKrpm(iqValue);
+	    _iq iqValuePu = FILTER_getValue(pdmObj->filterHandleOutFreq);
+	    return DM_ConvtoKrpm(handle, iqValuePu);
 	}
 	else
 		return 0;
 
 }
 
-int32_t DM_getCallbackEnc1OutRpm(DM_Handle handle)	//XXXX RPM
+int32_t DM_getCallbackEnc1OutRpm(DM_Handle dmHandle)	//XXXX RPM
 {
 	if (gMotorVars.bFlag_Run_Identify)
 	{
-	    _iq iqValue = ENC_getSpeedKRPM(gEncHandle);
-	    return DM_ConvtoKrpm(iqValue);
+	    _iq iqValueKRPM = ENC_getSpeedKRPM(DM_getEncHandle(dmHandle));
+	    return _IQmpyI32int(iqValueKRPM, 1000);	//DM_ConvtoKrpm(dmHandle, iqValuePu);
 	}
 	else
 		return 0;
 
 }
 
-int32_t DM_getCallbackEnc2OutRpm(DM_Handle handle)	//XXXX RPM
+int32_t DM_getCallbackEnc2OutRpm(DM_Handle dmHandle)	//XXXX RPM
 {
-	return DM_getCallbackEnc1OutRpm(handle);
+	return DM_getCallbackEnc1OutRpm(dmHandle);
 
 }
 
-int32_t DM_getCallbackHallOutRpm(DM_Handle handle)	//XXXX RPM
+int32_t DM_getCallbackHallOutRpm(DM_Handle dmHandle)	//XXXX RPM
 {
 	if (gMotorVars.bFlag_Run_Identify)
 	{
-	    _iq iqValue = HallBLDC_getSpeedPu(gHallBLDCHandle);
-	    return DM_ConvtoKrpm(iqValue);
+	    _iq iqValuePu = HallBLDC_getSpeedPu(DM_getHallBLDCHandle(dmHandle));
+	    return DM_ConvtoKrpm(dmHandle, iqValuePu);
 	}
 	else
 		return 0;
@@ -2429,20 +2431,22 @@ int32_t DM_getCallbackHallOutRpm(DM_Handle handle)	//XXXX RPM
 }
 
 
-int32_t DM_getCallbackCurrentOut(DM_Handle handle)	//Point2
+int32_t DM_getCallbackCurrentOut(DM_Handle dmHandle)	//Point2
 {
 	if (gMotorVars.bFlag_Run_Identify)
 	{
-	    DM_Obj *pdmObj = (DM_Obj *) handle;
+	    DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	    _iq iqValue = FILTER_getValue(pdmObj->filterHandleOutCurrent);
-		return (int32_t) _IQmpyI32int(iqValue, (long) (100*USER_IQ_FULL_SCALE_CURRENT_A));
+		//return (int32_t) _IQmpyI32int(iqValue, (long) (100*USER_IQ_FULL_SCALE_CURRENT_A));
+	    return (int32_t) _IQmpyI32int(iqValue, gUserParams.fFullScaleCurrent_A*100);
+
 
 	}
 	else
 		return 0;
 }
 
-int32_t DM_getCallbackTorqueOut(DM_Handle handle)
+int32_t DM_getCallbackTorqueOut(DM_Handle dmHandle)
 {
     if (gMotorVars.bFlag_Run_Identify)
     {
@@ -2478,51 +2482,52 @@ int32_t DM_getCallbackDCBus(DM_Handle handle)
 
     DM_Obj *pdmObj = (DM_Obj *) handle;
     _iq iqValue = FILTER_getValue(pdmObj->filterHandleDCBus);
-	return (int32_t) _IQmpyI32int(iqValue, USER_IQ_FULL_SCALE_VOLTAGE_V*10);
+    return (int32_t) _IQmpyI32int(iqValue, gUserParams.fFullScaleVoltage_V*10);
 
 }
 
 int32_t DM_getCallbackVoltageU(DM_Handle handle)
 {
     DM_Obj *pdmObj = (DM_Obj *) handle;
-    return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageU, USER_IQ_FULL_SCALE_VOLTAGE_V*10);
+   //return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageU, USER_IQ_FULL_SCALE_VOLTAGE_V*10);
+    return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageU, gUserParams.fFullScaleVoltage_V*10);
 }
 
 int32_t  DM_getCallbackVoltageV(DM_Handle handle)
 {
 
     DM_Obj *pdmObj = (DM_Obj *) handle;
-    return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageV, USER_IQ_FULL_SCALE_VOLTAGE_V*10);
+    return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageV,gUserParams.fFullScaleVoltage_V*10);// USER_IQ_FULL_SCALE_VOLTAGE_V*10);
 }
 
 int32_t  DM_getCallbackVoltageW(DM_Handle handle)
 {
     DM_Obj *pdmObj = (DM_Obj *) handle;
-    return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageW, USER_IQ_FULL_SCALE_VOLTAGE_V*10);
+    return (int32_t) _IQmpyI32int(pdmObj->iqOutVoltageW, gUserParams.fFullScaleVoltage_V*10);	//USER_IQ_FULL_SCALE_VOLTAGE_V*10);
 
 }
 
 int32_t DM_getCallbackCurrentU(DM_Handle handle)
 {
     DM_Obj *pdmObj = (DM_Obj *) handle;
-    return (int32_t) _IQmpyI32int(pdmObj->iqOutCurrentU, USER_IQ_FULL_SCALE_CURRENT_A*100);
+    return (int32_t) _IQmpyI32int(pdmObj->iqOutCurrentU, gUserParams.fFullScaleVoltage_V*10);	//USER_IQ_FULL_SCALE_CURRENT_A*100);
 }
 
 int32_t DM_getCallbackCurrentV(DM_Handle handle)
 {
     DM_Obj *pdmObj = (DM_Obj *) handle;
-    return (int32_t) _IQmpyI32int(pdmObj->iqOutCurrentV, USER_IQ_FULL_SCALE_CURRENT_A*100);
+    return (int32_t) _IQmpyI32int(pdmObj->iqOutCurrentV, gUserParams.fFullScaleVoltage_V*10);	//USER_IQ_FULL_SCALE_CURRENT_A*100);
 }
 
-int32_t DM_getCallbackCurrentW(DM_Handle handle)
+int32_t DM_getCallbackCurrentW(DM_Handle dmHandle)
 {
-    DM_Obj *pdmObj = (DM_Obj *) handle;
-    return (int32_t) _IQmpyI32int(pdmObj->iqOutCurrentW, USER_IQ_FULL_SCALE_CURRENT_A*100);
+    DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+    return (int32_t) _IQmpyI32int(pdmObj->iqOutCurrentW, gUserParams.fFullScaleVoltage_V*10);	//USER_IQ_FULL_SCALE_CURRENT_A*100);
 }
 
-int32_t DM_getCallbackInputTerm(DM_Handle handle)
+int32_t DM_getCallbackInputTerm(DM_Handle dmHandle)
 {
-	return (int32_t) IOEXPAND_InputTermA(gIoexpandHandle);
+	return (int32_t) IOEXPAND_InputTermA(DM_getIoexpandHandle(dmHandle));
 }
 
 /*int32_t DM_getCallbackOutputTerm(DM_Handle handle)
@@ -2534,19 +2539,19 @@ int32_t DM_getCallbackInputTerm(DM_Handle handle)
 
 }*/
 
-int32_t DM_getCallbackExtTemp(DM_Handle handle)
+int32_t DM_getCallbackExtTemp(DM_Handle dmHandle)
 {
 	return (int32_t) _IQmpyI32int(gAdcData.iqExtTemp, (long)(USER_IQ_FULL_SCALE_EXT_TEMP_C*10));
 }
 
 
-int32_t DM_getCallbackExtAd1(DM_Handle handle)
+int32_t DM_getCallbackExtAd1(DM_Handle dmHandle)
 {
 	return (int32_t) _IQmpyI32int(gAdcData.iqExtAdc[0], (long)(USER_IQ_FULL_SCALE_EXT_ADC_C*100));
 
 }
 
-int32_t DM_getCallbackExtAd2(DM_Handle handle)
+int32_t DM_getCallbackExtAd2(DM_Handle dmHandle)
 {
 	return (int32_t) _IQmpyI32int(gAdcData.iqExtAdc[1], (long)(USER_IQ_FULL_SCALE_EXT_ADC_C*100));
 
@@ -2596,27 +2601,32 @@ void DM_setCallbackAccTime(DM_Handle handle, const DM_Cell *pdmCell)
 }
 
 
-
-
 void DM_setCallbackResEstCurrent(DM_Handle handle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) handle;
-	_iq iqValue = _IQ(pdmObj->u16ResEstCurrent/10.);
+	_iq iqValue = _IQ(pdmObj->i16ResEstCurrent/10.);
 	gUserParams.fmaxCurrent_resEst = _IQtoF(iqValue);
 }
 
 void DM_setCallbackIndEstCurrent(DM_Handle handle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) handle;
-	_iq iqValue = _IQ(((int16_t)pdmObj->u16IndEstCurrent)/10.);
+	_iq iqValue = _IQ(((int16_t)pdmObj->i16IndEstCurrent)/10.);
 	gUserParams.fmaxCurrent_indEst = _IQtoF(iqValue);
 }
 
 void DM_setCallbackFluxEstHz(DM_Handle handle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) handle;
-	_iq iqValue = _IQ(pdmObj->u16FluxEstHz/10.);
+	_iq iqValue = _IQ(pdmObj->i16FluxEstHz/10.);
 	gUserParams.ffluxEstFreq_Hz = _IQtoF(iqValue);
+}
+
+void DM_setCallbackMaxCurrent(DM_Handle handle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) handle;
+	_iq iqValue = _IQ(pdmObj->i16MaxCurrent/10.);
+	gUserParams.fmaxCurrent = _IQtoF(iqValue);
 }
 
 void DM_setCallbackResStator(DM_Handle handle, const DM_Cell *pdmCell)
@@ -2664,70 +2674,91 @@ void DM_setCallbackMagnetCur(DM_Handle handle, const DM_Cell *pdmCell)
 }
 
 
-void DM_setCallbackKpSpeed(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKpSpeed(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	_iq iqValue = _IQ(pdmObj->u16Kp_Speed/1000.);
 
-	PID_setKp(gpCtlObj->pidHandle_spd ,iqValue);
+	gMotorVars.iqKp_spd = iqValue;
+	//CTRL_setKp(ctlHandle,CTRL_Type_PID_spd,iqValue);
+	//PID_setKp(gpCtlObj->pidHandle_spd ,iqValue);
 }
 
-void DM_setCallbackKiSpeed(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKiSpeed(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	_iq iqValue = _IQ(pdmObj->u16Ki_Speed/1000.);
 
-	PID_setKi(gpCtlObj->pidHandle_spd ,iqValue);
+	gMotorVars.iqKi_spd = iqValue;
+	//CTRL_setKi(ctlHandle,CTRL_Type_PID_spd,iqValue);
+	//PID_setKi(gpCtlObj->pidHandle_spd ,iqValue);
 }
 
-void DM_setCallbackKp_Id(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKp_Id(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	_iq iqValue = _IQ(pdmObj->u16Kp_Id/1000.);
 
-	PID_setKp(gpCtlObj->pidHandle_Id ,iqValue);
+	gMotorVars.iqKp_Id = iqValue;
+	//CTRL_setKp(ctlHandle,CTRL_Type_PID_Id,iqValue);
+	//PID_setKp(gpCtlObj->pidHandle_Id ,iqValue);
 }
 
-void DM_setCallbackKi_Id(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKi_Id(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	_iq iqValue = _IQ(pdmObj->u16Ki_Id/1000.);
 
-	PID_setKi(gpCtlObj->pidHandle_Id ,iqValue);
+	gMotorVars.iqKi_Id = iqValue;
+	//CTRL_setKi(ctlHandle,CTRL_Type_PID_Id,iqValue);
+
+	//PID_setKi(gpCtlObj->pidHandle_Id ,iqValue);
 }
 
-void DM_setCallbackKp_Iq(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKp_Iq(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	_iq iqValue = _IQ(pdmObj->u16Kp_Iq/1000.);
 
-	PID_setKp(gpCtlObj->pidHandle_Iq ,iqValue);
+	gMotorVars.iqKp_Iq = iqValue;
+	//CTRL_setKp(ctlHandle,CTRL_Type_PID_Iq,iqValue);
+	//PID_setKp(gpCtlObj->pidHandle_Iq ,iqValue);
 }
 
-void DM_setCallbackKi_Iq(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKi_Iq(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	_iq iqValue = _IQ(pdmObj->u16Ki_Iq/1000.);
 
-	PID_setKi(gpCtlObj->pidHandle_Iq ,iqValue);
+	gMotorVars.iqKi_Iq = iqValue;
+	//CTRL_setKi(ctlHandle,CTRL_Type_PID_Iq,iqValue);
+	//PID_setKi(gpCtlObj->pidHandle_Iq ,iqValue);
 }
 
-void DM_setCallbackKp_BLDC(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKp_BLDC(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
-
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
 
 	_iq iqValue = _IQ(pdmObj->u16Kp_BLDC/1000.);
 
-	PID_setKp(gHallBLDCObj.pidHandle_Bldc ,iqValue);
+	PID_setKp(HallBLDC_getPIDHandle(hallBLDCHandle),iqValue);
 }
 
-void DM_setCallbackKi_BLDC(DM_Handle handle, const DM_Cell *pdmCell)
+void DM_setCallbackKi_BLDC(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
-	DM_Obj *pdmObj = (DM_Obj *) handle;
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
 	_iq iqValue = _IQ(pdmObj->u16Ki_BLDC/1000.);
 
-	PID_setKi(gHallBLDCObj.pidHandle_Bldc ,iqValue);
+	PID_setKi(HallBLDC_getPIDHandle( hallBLDCHandle) ,iqValue);
 }
 
 _iq DM_transSpeedPu(uint16_t u16SpeedRpm)
@@ -2740,14 +2771,246 @@ _iq DM_transSpeedPu(uint16_t u16SpeedRpm)
 void DM_setCallbackBLDCtoFOC(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-    HallBLDC_setSpeedBldcToFastHighPu(gHallBLDCHandle,  DM_transSpeedPu(pdmObj->u16BLDC2FOCSpeed));    //1200 rpm
+
+    HallBLDC_setSpeedBldcToFastHighPu(DM_getHallBLDCHandle(dmHandle),  DM_transSpeedPu(pdmObj->u16BLDC2FOCSpeed));    //1200 rpm
 }
 
 void DM_setCallbackFOCtoBLDC(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-	HallBLDC_setSpeedFasttoBldcLowPu(gHallBLDCHandle, DM_transSpeedPu(pdmObj->u16FOC2BLDCSpeed));    //1200 rpm
+	HallBLDC_setSpeedFasttoBldcLowPu(DM_getHallBLDCHandle(dmHandle), DM_transSpeedPu(pdmObj->u16FOC2BLDCSpeed));    //1200 rpm
 }
+
+void DM_calcPIgains(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
+	CTRL_Obj *pctlObj = (CTRL_Obj *) ctlHandle;
+
+	float_t ffullScaleCurrent =  gUserParams.fFullScaleCurrent_A;	//    USER_IQ_FULL_SCALE_CURRENT_A;
+	float_t ffullScaleVoltage = gUserParams.fFullScaleVoltage_V;	//  USER_IQ_FULL_SCALE_VOLTAGE_V;
+	float_t fctrlPeriod_sec = CTRL_getCtrlPeriod_sec(ctlHandle);
+	float_t fLs_d;
+	float_t fLs_q;
+	float_t fRs;
+	float_t fRoverLs_d;
+	float_t fRoverLs_q;
+
+	_iq iqKp_Id;
+	_iq iqKi_Id;
+	_iq iqKp_Iq;
+	_iq iqKi_Iq;
+	_iq iqKp_Speed;
+	_iq iqKi_Speed;
+
+
+#ifdef __TMS320C28XX_FPU32__
+	int32_t i32tmp;
+
+	// when calling EST_ functions that return a float, and fpu32 is enabled, an integer is needed as a return
+	// so that the compiler reads the returned value from the accumulator instead of fpu32 registers
+	i32tmp = EST_getLs_d_H(pctlObj->estHandle);
+	fLs_d = *((float_t *)&i32tmp);
+
+	i32tmp = EST_getLs_q_H(pctlObj->estHandle);
+	fLs_q = *((float_t *)&i32tmp);
+
+	i32tmp = EST_getRs_Ohm(pctlObj->estHandle);
+	fRs = *((float_t *)&i32tmp);
+#else
+	fLs_d = EST_getLs_d_H(pctlObj->estHandle);
+
+	fLs_q = EST_getLs_q_H(pctlObj->estHandle);
+
+	fRs = EST_getRs_Ohm(pctlObj->estHandle);
+#endif
+
+	fRoverLs_d = fRs/fLs_d;
+	iqKp_Id = _IQ((0.25*fLs_d*ffullScaleCurrent)/(fctrlPeriod_sec*ffullScaleVoltage));
+	iqKi_Id = _IQ(fRoverLs_d*fctrlPeriod_sec);
+
+	fRoverLs_q = fRs/fLs_q;
+	iqKp_Iq = _IQ((0.25*fLs_q*ffullScaleCurrent)/(fctrlPeriod_sec*ffullScaleVoltage));
+	iqKi_Iq = _IQ(fRoverLs_q*fctrlPeriod_sec);
+
+
+	iqKp_Speed = _IQ(0.02*gUserParams.fmaxCurrent*gUserParams.fFullScaleFreq_Hz/ffullScaleCurrent);
+	iqKi_Speed = _IQ(2.0*gUserParams.fmaxCurrent*gUserParams.fFullScaleFreq_Hz*gUserParams.fctrlPeriod_sec/ffullScaleCurrent);
+
+
+
+	gMotorVars.iqKp_Id = iqKp_Id;
+	gMotorVars.iqKi_Id = iqKi_Id;
+	gMotorVars.iqKp_Iq = iqKp_Iq;
+	gMotorVars.iqKi_Iq = iqKi_Iq;
+
+	gMotorVars.iqKp_spd = iqKp_Speed;
+	gMotorVars.iqKi_spd = iqKi_Speed;
+
+	pdmObj->u16Kp_Id = (uint16_t) _IQmpyI32int(gMotorVars.iqKp_Id, 1000);
+	pdmObj->u16Ki_Id = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_Id, 1000);
+	pdmObj->u16Kp_Iq = (uint16_t) _IQmpyI32int(gMotorVars.iqKp_Iq, 1000);
+	pdmObj->u16Ki_Iq = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_Iq, 1000);
+	pdmObj->u16Kp_Speed = (uint16_t) _IQmpyI32int(gMotorVars.iqKp_spd, 1000);
+	pdmObj->u16Ki_Speed = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_spd, 1000);
+
+	//_iq iqValue = _IQ(pdmObj->u16Ki_BLDC/1000.);
+
+	//PID_setKi(HallBLDC_getPIDHandle( hallBLDCHandle) ,iqValue);
+
+
+	DM_saveToEEprom(dmHandle, &g_dmCellKp_Speed);
+	DM_saveToEEprom(dmHandle, &g_dmCellKi_Speed);
+	DM_saveToEEprom(dmHandle, &g_dmCellKp_Id);
+	DM_saveToEEprom(dmHandle, &g_dmCellKi_Id);
+	DM_saveToEEprom(dmHandle, &g_dmCellKp_Iq);
+	DM_saveToEEprom(dmHandle, &g_dmCellKi_Iq);
+	DM_saveToEEprom(dmHandle, &g_dmCellKp_BLDC);
+	DM_saveToEEprom(dmHandle, &g_dmCellKi_BLDC);
+
+
+
+} // end of calcPIgains() function
+
+void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	static bool bFirstTimeFlag = true;
+	if (bFirstTimeFlag)
+	{
+		bFirstTimeFlag = false;
+		return;
+	}
+
+	DM_runEmergyStop(dmHandle);
+
+	switch (pdmObj->u16ModelIndex)
+	{
+		case 0:	//BL129S25", , "Hub3000"}
+			gUserParams.u16motor_numPolePairs = 4;
+
+			pdmObj->i16MaxCurrent = 180;	//18A
+			pdmObj->i16ResEstCurrent = 8;	//0.8A
+			pdmObj->i16IndEstCurrent = -8;	//0.8A
+			pdmObj->i16FluxEstHz = 200;
+
+			pdmObj->u16AccTime = 20;	//0.2
+
+			gMotorVars.fRs_Ohm = 0.29247;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 0.0003781;
+		    gMotorVars.fLsq_H = 0.0003781;
+		    gMotorVars.fFlux_VpHz = 0.11662;
+		    gMotorVars.fMagnCurr_A = 0;
+		    break;
+		case 1: //"C30604E"
+			gUserParams.u16motor_numPolePairs = 4;
+
+			pdmObj->i16MaxCurrent = 20;	//2A
+			pdmObj->i16ResEstCurrent = 8;	//0.8A
+			pdmObj->i16IndEstCurrent = -8;	//0.8A
+			pdmObj->i16FluxEstHz = 200;
+			pdmObj->u16AccTime = 20;	//0.2
+
+			gMotorVars.fRs_Ohm = 1.3356;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 0.00610;
+			gMotorVars.fLsq_H = 0.00610;
+			gMotorVars.fFlux_VpHz = 0.2670;
+			gMotorVars.fMagnCurr_A = 0;
+			break;
+		case 2: //EMJ_04APB22
+			gUserParams.u16motor_numPolePairs = 2;
+
+			pdmObj->i16MaxCurrent = 20;	//2A
+			pdmObj->i16ResEstCurrent = 8;	//0.8A
+			pdmObj->i16IndEstCurrent = -8;	//0.8A
+			pdmObj->i16FluxEstHz = 200;
+			pdmObj->u16AccTime = 20;	//0.2
+
+			gMotorVars.fRs_Ohm = 2.2002;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 0.008721;
+			gMotorVars.fLsq_H = 0.008721;
+			gMotorVars.fFlux_VpHz = 0.384698;
+			gMotorVars.fMagnCurr_A = 0;
+			break;
+		case 3: //	EMJ_04APB22
+			gUserParams.u16motor_numPolePairs = 2;
+
+			pdmObj->i16MaxCurrent = 382;	//2A
+			pdmObj->i16ResEstCurrent = 10;	//0.8A
+			pdmObj->i16IndEstCurrent = -10;	//0.8A
+			pdmObj->i16FluxEstHz = 200;
+			pdmObj->u16AccTime = 20;	//0.2
+
+			gMotorVars.fRs_Ohm = 2.2002;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 0.008721;
+			gMotorVars.fLsq_H = 0.008721;
+			gMotorVars.fFlux_VpHz = 0.38467;
+			gMotorVars.fMagnCurr_A = 0;
+			break;
+		case 4: // QSmotor¡Ä¢²¢Ù¢å
+			gUserParams.u16motor_numPolePairs = 16;
+
+			pdmObj->i16MaxCurrent = 80;	//2A
+			pdmObj->i16ResEstCurrent = 25;	//0.8A
+			pdmObj->i16IndEstCurrent = -25;	//0.8A
+			pdmObj->i16FluxEstHz = 100;
+			pdmObj->u16AccTime = 2;	//0.02
+
+			gMotorVars.fRs_Ohm = 0.0193886;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 4.8015e-5;
+			gMotorVars.fLsq_H = 4.8015e-5;
+			gMotorVars.fFlux_VpHz = 0.20511;
+			gMotorVars.fMagnCurr_A = 0;
+			break;
+		case 5: // QSmotor¡Ä1.5¢Ù¢å
+			gUserParams.u16motor_numPolePairs = 16;
+
+			pdmObj->i16MaxCurrent = 80;	//2A
+			pdmObj->i16ResEstCurrent = 25;	//0.8A
+			pdmObj->i16IndEstCurrent = -25;	//0.8A
+			pdmObj->i16FluxEstHz = 100;
+			pdmObj->u16AccTime = 2;	//0.02
+
+			gMotorVars.fRs_Ohm = 0.0267187;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 8.64771e-6;
+			gMotorVars.fLsq_H = 8.64771e-6;
+			gMotorVars.fFlux_VpHz = 0.113901;
+			gMotorVars.fMagnCurr_A = 0;
+			break;
+
+	}
+
+
+	DM_saveToEEprom(dmHandle, &g_dmCellPolePair);
+	DM_saveToEEprom(dmHandle, &g_dmCellAccTime);
+
+	DM_saveToEEprom(dmHandle, &g_dmCellMaxCurrent);
+
+	DM_saveToEEprom(dmHandle, &g_dmCellResEstCurrent);
+	DM_saveToEEprom(dmHandle, &g_dmCellIndEstCurrent);
+	DM_saveToEEprom(dmHandle, &g_dmCellFluxEstHz);
+
+	DM_setCallbackAccTime(dmHandle, &g_dmCellAccTime);
+	DM_setCallbackMaxCurrent(dmHandle,&g_dmCellMaxCurrent);
+	DM_setCallbackResEstCurrent(dmHandle,&g_dmCellResEstCurrent);
+	DM_setCallbackIndEstCurrent(dmHandle,&g_dmCellIndEstCurrent);
+	DM_setCallbackFluxEstHz(dmHandle, &g_dmCellFluxEstHz);
+
+
+
+	DM_saveMotorParameters(dmHandle);
+	DM_calcPIgains(dmHandle);
+
+}
+
+
+
 
 
 void DM_saveBiasParameters(DM_Handle dmHandle)
@@ -2798,7 +3061,9 @@ void DM_saveMotorParameters(DM_Handle dmHandle)
 	DM_saveToEEprom(dmHandle, &g_dmCellRatedFlux);
 	DM_saveToEEprom(dmHandle, &g_dmCellMagnetCur);
 
-	DM_saveBiasParameters(dmHandle);
+
+
+	//DM_saveBiasParameters(dmHandle);
 
 	//gMotorVars.bFlag_enableSys = false;
 

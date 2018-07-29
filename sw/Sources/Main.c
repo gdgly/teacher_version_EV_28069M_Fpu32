@@ -94,8 +94,6 @@ bool bFlag_Latch_softwareUpdate = true;
 USER_Params gUserParams;
 
 HAL_PwmData_t gPwmData = {_IQ(0.0), _IQ(0.0), _IQ(0.0)};
-//HAL_PwmData_t gPwmData = {_IQ(-0.8), _IQ(0.0), _IQ(0.8)};
-
 HAL_AdcData_t gAdcData;
 
 _iq giqMaxCurrentSlope = _IQ(0.0);
@@ -207,12 +205,9 @@ void main(void)
   	//gLcdHandle =LCD_init(&gLcdObj, sizeof(gLcdObj));
 	gdmHandle = DM_init(&gdmObj,sizeof(gdmObj));
 
+	USER_checkForErrors(&gUserParams);	// check for errors in user parameters
 
-	// check for errors in user parameters
-	USER_checkForErrors(&gUserParams);
-
-	// store user parameter error in global variable
-	gMotorVars.UserErrorCode = USER_getErrorCode(&gUserParams);
+	gMotorVars.UserErrorCode = USER_getErrorCode(&gUserParams); // store user parameter error in global variable
 
 	// do not allow code execution if there is a user parameter error
 	if(gMotorVars.UserErrorCode != USER_ErrorCode_NoError)
@@ -285,7 +280,7 @@ void main(void)
 
 	    PID_Handle pidHandle = HallBLDC_getPIDHandle(gHallBLDCHandle);
 	    PID_setGains(pidHandle,iqKp_Iq,iqKi_Iq,_IQ(0.0));
-	    PID_setMinMax(pidHandle,_IQ(0.0),_IQ(0.0));
+	    PID_setMinMax(pidHandle,_IQ(-1.0),_IQ(1.0));
 	    PID_setUi(pidHandle,_IQ(0.0));
 
 	    HallBLDC_setEnableStartup(gHallBLDCHandle, false);
@@ -354,7 +349,16 @@ void main(void)
 	HAL_disablePwm(gHalHandle);
 
 //	LCD_setup(gLcdHandle, gI2cMessageHandle);		//I2C interrupt must turn on
-	DM_setup(gdmHandle,gEepromHandle );
+	{
+		DM_setCtlHandle(gdmHandle, gCtrlHandle);
+		DM_setHalHandle(gdmHandle, gHalHandle);
+		DM_setThrottleHandle(gdmHandle, gThrottleHandle);
+		DM_setEndHandle(gdmHandle, gEncHandle);
+		DM_setIoexpandHandle(gdmHandle, gIoexpandHandle);
+		DM_setHallBLDCHandle(gdmHandle, gHallBLDCHandle);
+
+		DM_setup(gdmHandle,gEepromHandle );
+	}
     IOEXPAND_setup(gIoexpandHandle,gI2cMessageHandle);
 
     // set the default controller parameters
@@ -431,10 +435,11 @@ void main(void)
 
 	  {
 		  CTL_METHOD_e ctlMethod = DM_getCtlMethod(gdmHandle);
-		  if (ctlMethod ==CTL_MIX_BLDC)
-			  HallBLDC_setEnableStartup(gHallBLDCHandle, true);
+		  HallBLDC_setEnableStartup(gHallBLDCHandle, (ctlMethod ==CTL_MIX_BLDC));
+		 /* if (ctlMethod ==CTL_MIX_BLDC)
+
 		  else
-			  HallBLDC_setEnableStartup(gHallBLDCHandle, false);
+			  HallBLDC_setEnableStartup(gHallBLDCHandle, false);*/
 	  }
 
 	  // loop while the enable system flag is true
@@ -493,7 +498,6 @@ void main(void)
 						  HAL_setBias(gHalHandle,HAL_SensorType_Current,0,_IQ(gdmObj.u16IBias1/1000.));
 						  HAL_setBias(gHalHandle,HAL_SensorType_Current,1,_IQ(gdmObj.u16IBias2/1000.));
 						  HAL_setBias(gHalHandle,HAL_SensorType_Current,2,_IQ(gdmObj.u16IBias3/1000.));
-
 
 					  }
 
@@ -558,8 +562,11 @@ void main(void)
 
 
 				  // initialize the watch window kp and ki current values with pre-calculated values
-				  gMotorVars.iqKp_Idq = CTRL_getKp(gCtrlHandle,CTRL_Type_PID_Id);
-				  gMotorVars.iqKi_Idq = CTRL_getKi(gCtrlHandle,CTRL_Type_PID_Id);
+				  gMotorVars.iqKp_Id = CTRL_getKp(gCtrlHandle,CTRL_Type_PID_Id);
+				  gMotorVars.iqKi_Id = CTRL_getKi(gCtrlHandle,CTRL_Type_PID_Id);
+
+				  gMotorVars.iqKp_Iq = CTRL_getKp(gCtrlHandle,CTRL_Type_PID_Iq);
+				  gMotorVars.iqKi_Iq = CTRL_getKi(gCtrlHandle,CTRL_Type_PID_Iq);
 
 				  gMotorVars.iqKp_spd = CTRL_getKp(gCtrlHandle,CTRL_Type_PID_spd);
 				  gMotorVars.iqKi_spd = CTRL_getKi(gCtrlHandle,CTRL_Type_PID_spd);
@@ -754,11 +761,18 @@ interrupt void timer1ISR(void)		//Low priority
 	// acknowledge the Timer 1 interrupt	// 1ms interrupt
 
     static uint_least8_t u8Index = 0;
+    _iq iqSpeedPu;
     //bool bResult;
 
     HAL_enableGlobalInts(gHalHandle);       //for multiple interrupts
 
-    DM_run(gdmHandle,&gAdcData, EST_getFm_pu(gpCtlObj->estHandle), gpCtlObj->pidHandle_Iq->iqfbackValue, ENC_getSpeedKRPM(gEncHandle));
+
+    iqSpeedPu = (HallBLDC_getDoBLDC(gHallBLDCHandle))?
+                 HallBLDC_getSpeedPu(gHallBLDCHandle) :  EST_getFm_pu(gpCtlObj->estHandle);
+
+    DM_run(gdmHandle,&gAdcData, iqSpeedPu, gpCtlObj->pidHandle_Iq->iqfbackValue, ENC_getSpeedKRPM(gEncHandle));
+
+
     Throttle_run(gThrottleHandle,gAdcData.iqExtAdc[0]);
 
     u8Index = (u8Index+1) & 0x0003;
@@ -1158,10 +1172,11 @@ void updateKpKiGains(CTRL_Handle handle)
 		CTRL_setKi(handle,CTRL_Type_PID_spd,gMotorVars.iqKi_spd);
 
 		// set the kp and ki current values for Id and Iq from the watch window
-		CTRL_setKp(handle,CTRL_Type_PID_Id,gMotorVars.iqKp_Idq);
-		CTRL_setKi(handle,CTRL_Type_PID_Id,gMotorVars.iqKi_Idq);
-		CTRL_setKp(handle,CTRL_Type_PID_Iq,gMotorVars.iqKp_Idq);
-		CTRL_setKi(handle,CTRL_Type_PID_Iq,gMotorVars.iqKi_Idq);
+		CTRL_setKp(handle,CTRL_Type_PID_Id,gMotorVars.iqKp_Id);
+		CTRL_setKi(handle,CTRL_Type_PID_Id,gMotorVars.iqKi_Id);
+		CTRL_setKp(handle,CTRL_Type_PID_Iq,gMotorVars.iqKp_Iq);
+		CTRL_setKi(handle,CTRL_Type_PID_Iq,gMotorVars.iqKi_Iq);
+
 	}
 
 } // end of updateKpKiGains() function

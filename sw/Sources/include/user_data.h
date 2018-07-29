@@ -43,19 +43,34 @@
 // the includes
 
 #include "sw/modules/types/src/types.h"
+#include "sw/modules/throttle/src/32b/throttle.h"
+
 #include "sw/drivers/sci/src/32b/f28x/f2806x/sci.h"
 #include "sw/drivers/gpio/src/32b/f28x/f2806x/gpio.h"
 #include "sw/modules/hal/boards/hvkit_rev1p1/f28x/f2806x/src/hal.h"
 
 #include "sw/modules/filter/src/32b/filter_fo.h"
 
+// platforms
+#ifndef QEP
+#include "sw/modules/ctrl/src/32b/ctrl.h"
+#else
+#include "sw/modules/ctrl/src/32b/ctrlQEP.h"
+#endif
+
+
+
 //#include "main.h"
 #include "sci_message.h"
 #include "i2c_24lc32.h"
+#include "i2c_mcp23017.h"
 #include "filter.h"
 
 
+extern USER_Params 			gUserParams;
 
+extern HAL_PwmData_t 		gPwmData;
+extern HAL_AdcData_t        gAdcData;
 
 
 #ifdef __cplusplus
@@ -248,19 +263,40 @@ typedef struct _DM_Mode_
 	char			ai8ModeName[20];
 } DM_Mode;
 
+extern uint16_t DATA_min(uint16_t u16Val1, uint16_t u16Val2);
+extern void Data_SetDelayCnt(uint16_t u16Delay);
+extern uint16_t Data_GetDelayCnt();		// internal
+extern uint16_t DATA_ConvertToCnt(uint16_t u16Delay);
+extern void DATA_Delay(uint16_t u16Delay);
+extern uint16_t DATA_MakeWord(uint_least8_t u8HiWord, uint_least8_t u8LoWord );
+extern uint_least8_t DATA_HiByte(uint16_t u16Value);
+extern uint_least8_t DATA_LoByte(uint16_t u16Value);
+extern uint16_t DATA_CalCRC16(uint_least8_t au8Buff[], uint_least8_t u8TotNo);
+extern uint16_t DATA_InRange(DM_TYPE_e dmType, uint16_t u16Value, uint16_t u16DefValue, uint16_t u16MaxValue, uint16_t u16MinValue);
+
+
 #define MAX_TRIP_TRACE  5
 typedef struct _DM_Obj_
 {
-    EEPROM_Handle eepromHandle;
+	CTRL_Handle   			ctrlHandle;
+	HAL_Handle 	  			halHandle;
+	Throttle_Handle 		throttleHandle;
+	ENC_Handle          	encHandle;
+	IOEXPAND_Handle			ioexpandHandle;
+	HALLBLDC_Handle     	hallBLDCHandle;
 
-	const DM_Mode* *pdmMode;
-	uint_least8_t	u8ArraySize;
-	char			ai8ObjName[20];
+    EEPROM_Handle 			eepromHandle;
 
-	FILTER_Obj     filterDCBus, filterOutFreq, filterOutEncoder, filterOutCurrent;
-	FILTER_Handle  filterHandleDCBus, filterHandleOutFreq, filterHandleOutEncoder, filterHandleOutCurrent;
 
-	_iq            iqOutVoltageU, iqOutVoltageV, iqOutVoltageW, iqOutCurrentU, iqOutCurrentV, iqOutCurrentW;
+
+	const DM_Mode* 			*pdmMode;
+	uint_least8_t			u8ArraySize;
+	char					ai8ObjName[20];
+
+	FILTER_Obj     			filterDCBus, filterOutFreq, filterOutEncoder, filterOutCurrent;
+	FILTER_Handle  			filterHandleDCBus, filterHandleOutFreq, filterHandleOutEncoder, filterHandleOutCurrent;
+
+	_iq            			iqOutVoltageU, iqOutVoltageV, iqOutVoltageW, iqOutCurrentU, iqOutCurrentV, iqOutCurrentW;
 
 	bool                    bLocalMode, bAutotuneMode,bReverseProhibit;
 	uint_least8_t           u8OperationSignal;
@@ -283,27 +319,24 @@ typedef struct _DM_Obj_
 	uint16_t				u16IBias1, u16IBias2, u16IBias3;		//Point3
 
 
-	uint16_t				u16ResEstCurrent, u16IndEstCurrent, u16FluxEstHz;		//point1
+	int16_t					i16ResEstCurrent, i16IndEstCurrent, i16FluxEstHz;	//point 1
+	int16_t					i16MaxCurrent;	//point1
 	uint16_t				u16MotorRs, u16MotorRr;		//Point4
-	uint16_t				u16MotorLd, u16MotorLq;		//Point4
+	uint16_t				fDM_setCallbackResEstCurrent, u16MotorLd, u16MotorLq;		//Point4
 	uint16_t				u16RatedFlux,u16MagnetCur;	//
 
 	uint16_t				u16Kp_Speed, u16Ki_Speed,
 							u16Kp_Id, u16Ki_Id, u16Kp_Iq, u16Ki_Iq, u16Kp_BLDC, u16Ki_BLDC;
 
+	uint_least8_t			u8FactorySetting;
+	uint16_t				u16ModelIndex;
 
-//
+
+
 //#define USER_MOTOR_RES_EST_CURRENT      (0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
 //#define USER_MOTOR_IND_EST_CURRENT      (-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
 //#define USER_MOTOR_MAX_CURRENT          (18)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
 //#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)
-
-#define USER_MOTOR_RES_EST_CURRENT      (1.5)//(0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
-#define USER_MOTOR_IND_EST_CURRENT      (-1.5)//(-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
-#define USER_MOTOR_MAX_CURRENT          (8)//(1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
-#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated//-->20*60/(4polepairs)=300rpm
-
-
 
 } DM_Obj;
 
@@ -313,22 +346,91 @@ typedef struct _DM_Obj_
 extern DM_Obj gdmObj;
 extern DM_Handle gdmHandle;
 
-extern uint16_t g_u16DelayCnt;
 
-extern uint16_t DATA_min(uint16_t u16Val1, uint16_t u16Val2);
-extern void Data_SetDelayCnt(uint16_t u16Delay);
-extern uint16_t Data_GetDelayCnt();		// internal
-extern uint16_t DATA_ConvertToCnt(uint16_t u16Delay);
-extern void DATA_Delay(uint16_t u16Delay);
-extern uint16_t DATA_MakeWord(uint_least8_t u8HiWord, uint_least8_t u8LoWord );
-extern uint_least8_t DATA_HiByte(uint16_t u16Value);
-extern uint_least8_t DATA_LoByte(uint16_t u16Value);
-extern uint16_t DATA_CalCRC16(uint_least8_t au8Buff[], uint_least8_t u8TotNo);
-extern uint16_t DATA_InRange(DM_TYPE_e dmType, uint16_t u16Value, uint16_t u16DefValue, uint16_t u16MaxValue, uint16_t u16MinValue);
+
+extern uint16_t g_u16DelayCnt;
 
 extern DM_Handle DM_init(const void *pMemory,const size_t numBytes);
 extern void DM_setup(DM_Handle dmHandle, EEPROM_Handle eepromHandle);
 extern void DM_run(DM_Handle dmHandle, HAL_AdcData_t *pAdcData, _iq iqOutFreq, _iq iqOutCur, _iq OutEncoder);
+
+inline void DM_setCtlHandle(DM_Handle dmHandle, CTRL_Handle ctlHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	pdmObj->ctrlHandle = ctlHandle;
+}
+
+inline CTRL_Handle DM_getCtlHandle(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	return pdmObj->ctrlHandle;
+}
+
+inline void DM_setHalHandle(DM_Handle dmHandle, HAL_Handle halHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	pdmObj->halHandle = halHandle;
+}
+
+inline HAL_Handle DM_getHalHandle(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	return pdmObj->halHandle;
+}
+
+//HAL_Handle 	  			halHandle;
+
+inline void DM_setThrottleHandle(DM_Handle dmHandle, Throttle_Handle throttleHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	pdmObj->throttleHandle = throttleHandle;
+}
+
+inline Throttle_Handle DM_getThrottleHandle(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	return pdmObj->throttleHandle;
+}
+
+inline void DM_setEndHandle(DM_Handle dmHandle, ENC_Handle encHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	pdmObj->encHandle = encHandle;
+}
+
+inline ENC_Handle DM_getEncHandle(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	return pdmObj->encHandle;
+}
+
+inline void DM_setIoexpandHandle(DM_Handle dmHandle, IOEXPAND_Handle ioexpandHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	pdmObj->ioexpandHandle = ioexpandHandle;
+}
+
+inline IOEXPAND_Handle DM_getIoexpandHandle(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	return pdmObj->ioexpandHandle;
+}
+
+inline void DM_setHallBLDCHandle(DM_Handle dmHandle, HALLBLDC_Handle hallBldcHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	pdmObj->hallBLDCHandle = hallBldcHandle;
+}
+
+inline HALLBLDC_Handle DM_getHallBLDCHandle(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	return pdmObj->hallBLDCHandle;
+}
+
+//extern IOEXPAND_Handle 	    gIoexpandHandle;
+//ENC_Handle          	encHandle
+
 
 
 inline bool DM_isInverterTrip(DM_Handle dmHandle)
@@ -475,7 +577,7 @@ inline _iq DM_getFreqOutPu(DM_Handle dmHandle)
 
 inline bool DM_isFreqOutLowSpeed(DM_Handle dmHandle)
 {
-    return _IQabs(DM_getFreqOutPu(dmHandle)) < _IQ(0.01);
+    return _IQabs(DM_getFreqOutPu(dmHandle)) <   _IQ(gUserParams.fzeroSpeedLimit);
 }
 
 extern _iq DM_getLocalFreqRef(DM_Handle dmHandle);
@@ -539,6 +641,8 @@ inline void DM_setInverterTripType(DM_Handle handle, uint16_t u16TripType)
     	}
     }
 }
+
+
 
 inline void DM_clrInverterTripType(DM_Handle handle, uint16_t u16TripType)
 {
@@ -664,7 +768,8 @@ extern void DM_outFunction(DM_Handle dmHandle,
 				   char *pai8Line1, char *pai8Line2);
 
 extern void DM_saveMotorParameters(DM_Handle dmHandle);
-
+extern void DM_saveBiasParameters(DM_Handle dmHandle);
+extern void DM_calcPIgains(DM_Handle dmHandle);
 //extern void DM_setCallbackFreqRef(DM_Handle handle, const DM_Cell *pdmCell);
 //extern void DM_setCallbackCurrentRef(DM_Handle handle, const DM_Cell *pdmCell);
 
@@ -707,6 +812,7 @@ extern void DM_setCallbackResEstCurrent(DM_Handle handle, const DM_Cell *pdmCell
 extern void DM_setCallbackIndEstCurrent(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackFluxEstHz(DM_Handle handle, const DM_Cell *pdmCell);
 
+extern void DM_setCallbackMaxCurrent(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackResStator(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackResRotor(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackIndAxisD(DM_Handle handle, const DM_Cell *pdmCell);
@@ -724,7 +830,7 @@ extern void DM_setCallbackKp_BLDC(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackKi_BLDC(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackBLDCtoFOC(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackFOCtoBLDC(DM_Handle handle, const DM_Cell *pdmCell);
-
+extern void DM_setCallbackMotorModel(DM_Handle handle, const DM_Cell *pdmCell);
 
 
 

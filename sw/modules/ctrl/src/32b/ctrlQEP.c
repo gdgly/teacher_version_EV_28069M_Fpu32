@@ -713,42 +713,35 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
     _iq iqangle_pu;
     MATH_vec2 phasor;
 
-    // run Clarke transform on current
-    CLARKE_run(pctlObj->clarkeHandle_I,&pAdcData->I,CTRL_getIab_in_addr(ctlHandle));
-    // run Clarke transform on voltage
-    CLARKE_run(pctlObj->clarkeHandle_V,&pAdcData->V,CTRL_getVab_in_addr(ctlHandle));
-    // run the estimator
+
+    CLARKE_run(pctlObj->clarkeHandle_I,&pAdcData->I,CTRL_getIab_in_addr(ctlHandle));// run Clarke transform on current
+    CLARKE_run(pctlObj->clarkeHandle_V,&pAdcData->V,CTRL_getVab_in_addr(ctlHandle)); // run Clarke transform on voltage
+
     EST_run(pctlObj->estHandle,CTRL_getIab_in_addr(ctlHandle),CTRL_getVab_in_addr(ctlHandle),
-            pAdcData->iqdcBus,TRAJ_getIntValue(pctlObj->trajHandle_spd));
+            pAdcData->iqdcBus,TRAJ_getIntValue(pctlObj->trajHandle_spd));	// run the estimator
 
 
-    HALLBLDC_Ctrl_Run(ctlHandle, halHandle, hallBLDCHandle);
+    HALLBLDC_Ctrl_Run(ctlHandle, halHandle, hallBLDCHandle);		// Change BLDC/ FOC
 
     // generate the motor electrical angle
     //iqangle_pu = EST_getAngle_pu(pCtlObj->estHandle);
 
     // Update electrical angle from the sensor
     iqangle_pu = iqElectricalAnglePu; // org
-
-    // compute the sin/cos phasor
-    CTRL_computePhasor(iqangle_pu,&phasor);
-
-    // set the phasor in the Park transform
-    PARK_setPhasor(pctlObj->parkHandle,&phasor);
+    CTRL_computePhasor(iqangle_pu,&phasor);			// compute the sin/cos phasor
+    PARK_setPhasor(pctlObj->parkHandle,&phasor);	 // set the phasor in the Park transform
 
     // run the Park transform
     PARK_run(pctlObj->parkHandle,CTRL_getIab_in_addr(ctlHandle),CTRL_getIdq_in_addr(ctlHandle));
-
-    // when appropriate, run the PID speed controller
-    if(CTRL_doSpeedCtrl(ctlHandle))
+    if(CTRL_doSpeedCtrl(ctlHandle))			  // when appropriate, run the PID speed controller
     {
         _iq iqrefValue = TRAJ_getIntValue(pctlObj->trajHandle_spd);
         _iq iqoutMax = TRAJ_getIntValue(pctlObj->trajHandle_spdMax);
         _iq iqoutMin = -iqoutMax;
         _iq iqfbackValue;
 
-        // reset the speed count
-        CTRL_resetCounter_speed(ctlHandle);
+
+        CTRL_resetCounter_speed(ctlHandle);		// reset the speed count
 
         iqfbackValue = (HallBLDC_getDoBLDC(hallBLDCHandle))?
                         HallBLDC_getSpeedPu(hallBLDCHandle) :  EST_getFm_pu(pctlObj->estHandle);
@@ -762,7 +755,6 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             return;
         }*/
      }
-
 
     // when appropriate, run the PID Id and Iq controllers
     if(CTRL_doCurrentCtrl(ctlHandle) )
@@ -782,8 +774,7 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             PID_Handle pidHandle;
 
             _iq iqSpeedKrpm = _IQmpy(HallBLDC_getSpeedPu(hallBLDCHandle),EST_get_pu_to_krpm_sf(pctlObj->estHandle));
-
-            if(_IQabs(iqSpeedKrpm) < _IQ(0.15))      // 150 rpm
+           /* if(_IQabs(iqSpeedKrpm) < _IQ(0.15))      // 150 rpm
             {
             	if (CTRL_getFlag_enableSpeedCtrl(ctlHandle))
             		iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/10;
@@ -794,7 +785,10 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             		else
             			iqBLDCPwmDuty = -_IQ(0.1);
             	}
-
+            }*/
+            if (CTRL_getFlag_enableSpeedCtrl(ctlHandle) && _IQabs(iqSpeedKrpm) < _IQ(0.2))
+            {
+            	iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/10;
             }
             else
             {
