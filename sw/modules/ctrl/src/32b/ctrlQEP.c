@@ -788,15 +788,22 @@ void CTRL_runOnLine_User(CTRL_Handle ctlHandle,HAL_Handle halHandle, HALLBLDC_Ha
             }*/
             if (CTRL_getFlag_enableSpeedCtrl(ctlHandle) && _IQabs(iqSpeedKrpm) < _IQ(0.2))
             {
-            	iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/10;
+//                iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/10;
+//            	iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/2;
+            	iqBLDCPwmDuty = CTRL_getSpd_out_pu(ctlHandle)/0.5;
             }
             else
             {
 
                 iqHall_BLDC_Is_fdb_pu = pAdcData->I.aiqValue[HallBLDC_getCurrentFdbIndex(hallBLDCHandle)];
                 //iqHall_BLDC_Is_ref_pu = pCtlObj->iqSpd_out;
+//                iqHall_BLDC_Is_ref_pu =(CTRL_getFlag_enableSpeedCtrl(ctlHandle)) ?
+//                                     CTRL_getSpd_out_pu(ctlHandle)/10: CTRL_getIq_ref_pu(ctlHandle);
+//                iqHall_BLDC_Is_ref_pu =(CTRL_getFlag_enableSpeedCtrl(ctlHandle)) ?
+//                                     CTRL_getSpd_out_pu(ctlHandle)/2: CTRL_getIq_ref_pu(ctlHandle);
                 iqHall_BLDC_Is_ref_pu =(CTRL_getFlag_enableSpeedCtrl(ctlHandle)) ?
-                                     CTRL_getSpd_out_pu(ctlHandle)/10: CTRL_getIq_ref_pu(ctlHandle);
+                                     CTRL_getSpd_out_pu(ctlHandle)/0.5: CTRL_getIq_ref_pu(ctlHandle);
+
                 pidHandle = HallBLDC_getPIDHandle(hallBLDCHandle);
                 PID_setMinMax(pidHandle,-iqmaxVsMag,iqmaxVsMag);    // set the minimum and maximum values
                 //PID_setMinMax(pidHandle,_IQ(-0.2),_IQ(0.2));    // set
