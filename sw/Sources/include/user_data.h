@@ -165,7 +165,7 @@ typedef enum
 	DM_ATTRIBUTE_Write 	= 0x0002,
 	DM_ATTRIBUTE_Write_Run = 0x0004,
 
-
+	/*setting how many float point you need*/
 	DM_ATTRIBUTE_Point0 = 0x0000,
 	DM_ATTRIBUTE_Point1 = 0x0010,
 	DM_ATTRIBUTE_Point2 = 0x0020,
@@ -218,7 +218,8 @@ typedef struct _DM_Cell_
 	void			*pValue;
 	uint16_t		u16EEPromAddr, u16ModbusAdd;
 	uint16_t		u16DefValue, u16MaxValue, u16MinValue;
-	uint16_t 		u16Attribute, u16Unit;
+	uint16_t 		u16Attribute;
+	uint16_t        u16Unit;
 
 	//int32_t (*CallbackValue)(const struct _DM_Cell_ *pdmCell);
 	int32_t (*getCallbackFunction)(DM_Handle handle);

@@ -151,6 +151,9 @@ Throttle_Handle     gThrottleHandle;
 //uint16_t gLEDcnt = 0;
 
 volatile MOTOR_Vars_t gMotorVars = MOTOR_Vars_INIT;
+//volatile MOTOR_Vars_t gMotorVars ;
+
+
 
 #ifdef FLASH
 // Used for running BackGround in flash, and ISR in RAM
@@ -176,7 +179,8 @@ _iq giqTorque_Flux_Iq_pu_to_Nm_sf;
 
 void main(void)
 {
-	//uint_least8_t u8estNumber = 0;
+
+    //uint_least8_t u8estNumber = 0;
 
 #ifdef FAST_ROM_V1p6
 	//uint_least8_t u8ctrlNumber = 0;
@@ -204,6 +208,7 @@ void main(void)
   	gIoexpandHandle = IOEXPAND_init(&gIoexpandObj, sizeof(gIoexpandObj));
   	//gLcdHandle =LCD_init(&gLcdObj, sizeof(gLcdObj));
 	gdmHandle = DM_init(&gdmObj,sizeof(gdmObj));
+
 
 	USER_checkForErrors(&gUserParams);	// check for errors in user parameters
 
@@ -289,7 +294,10 @@ void main(void)
 
 	gThrottleHandle = Throttle_init(&gThrottleObj,sizeof(gThrottleObj));
 	{
-	    Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(1.0), _IQ(0.0));
+
+	    //Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.1), _IQ(0.0));//origin
+	    //Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.4), _IQ(0.0));//this decrease the range of the throttle,since the throttle while be to sensitive using the original parameters
+	    Throttle_setParams(gThrottleHandle,false,_IQ(USER_EXT_ADC_SF),_IQ(0.1),Throttle_MAX_out,Throttle_MIN_out);
 	}
 
 #ifndef F2802xF
@@ -896,6 +904,7 @@ interrupt void i2cInt1AISR(void)
 				//	I2C_StopCond(i2cHandle);
 				//else
 				I2C_clearRxFifoIntFlag(i2cHandle);
+
 
 			}
 		    else if (gI2cMessage.msgStatusCode == I2C_MSGSTAT_READ_BUSY)

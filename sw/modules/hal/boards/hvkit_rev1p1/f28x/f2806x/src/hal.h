@@ -106,15 +106,16 @@ extern "C" {
 
 //! \brief Defines the PWM deadband falling edge delay count (system clocks)
 //!
-//#define HAL_PWM_DBFED_CNT         (uint16_t)(2.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Org
+#define HAL_PWM_DBFED_CNT         (uint16_t)(2.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Org
 //#define HAL_PWM_DBFED_CNT         (uint16_t)(3.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Modify
-#define HAL_PWM_DBFED_CNT         (uint16_t)(4.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Modify
+//#define HAL_PWM_DBFED_CNT         (uint16_t)(4.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Modify
 
 //! \brief Defines the PWM deadband rising edge delay count (system clocks)
 //!
-//#define HAL_PWM_DBRED_CNT        (uint16_t)(2.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Org
+
+#define HAL_PWM_DBRED_CNT        (uint16_t)(2.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Org
 //#define HAL_PWM_DBRED_CNT        (uint16_t)(3.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Modify
-#define HAL_PWM_DBRED_CNT         (uint16_t)(4.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Modify
+//#define HAL_PWM_DBRED_CNT         (uint16_t)(4.0 * (float_t)USER_SYSTEM_FREQ_MHz)            // 2 usec Modify
 
 
 //! \brief Defines the function to turn LEDs off

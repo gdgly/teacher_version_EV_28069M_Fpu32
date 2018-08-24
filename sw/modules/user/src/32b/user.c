@@ -61,6 +61,9 @@
 // the functions
 
 
+
+
+
 void USER_setParams(USER_Params *pUserParams)
 {
 	pUserParams->fFullScaleCurrent_A = USER_IQ_FULL_SCALE_CURRENT_A;

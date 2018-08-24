@@ -74,6 +74,8 @@ Throttle_Handle Throttle_init(void *pMemory, const size_t numBytes)
 
 //! \brief     Sets up the throttle module parameters initially
 //! \param[in] handle  The throttle handle
+//! \\ read the signal from throttle into the MCU via throttle ,so the Max_adc and Min_adc determine the boarder of sensing signal from throttle
+//! \\ After reading in the signal ,then mapping that from Min_out(ex:0) to Max_out(ex:1)
 void Throttle_setParams(Throttle_Handle handle,
                                 const bool bInvert,
                                 const _iq iqMax_adc,

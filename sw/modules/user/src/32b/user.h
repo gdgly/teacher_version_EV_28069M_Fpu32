@@ -67,14 +67,74 @@ extern "C" {
 #endif
 
 
-#define LITTLE_DRIVER_48V	10
-#define LITTLE_DRIVER_48V2   11
-#define LITTLE_DRIVER_400V	12
 
+//! \choosing the throttle value/sensitivity
+#define Throttle_MAX_out    _IQ(0.4)        //up to _IQ(1.0)
+#define Throttle_MIN_out    _IQ(0.0)
+
+
+
+//! \setting the initial value for the global variable of  gMotorVar(the main parameters using during the execution process)
+#define MOTOR_Vars_INIT {false, /*bFlag_enableSys*/\
+                         false, /*bFlag_Run_Identify*/\
+                         false, /*bFlag_MotorIdentified*/\
+                         true, /*bFlag_enableForceAngle*/\
+                         false, /*bFlag_enableFieldWeakening*/\
+                         false, /*bFlag_enableRsRecalc*/\
+                         true, /*bFlag_enableUserParams*/\
+                         false, /*bFlag_enableOffsetcalc*/\
+                         false, /*bFlag_enablePowerWarp*/\
+                         CTRL_State_Idle, /*CtrlState*/\
+                         EST_State_Idle, /*EstState*/\
+                         USER_ErrorCode_NoError, /*UserErrorCode*/\
+                         {0,CTRL_TargetProc_Unknown,0,0}, /*CtrlVersion*/\
+                         _IQ(0.0), /*iqIdRef_A*/\
+                         _IQ(0.0), /*iqIqRef_A*/\
+                         _IQ(0.1), /*iqStopSpeedRef_krpm*/\
+                         _IQ(0.1), /*iqSpeedRef_krpm*/\
+                         _IQ(0.0), /*iqSpeedTraj_krpm*/\
+                         _IQ(0.2), /*iqMaxAccel_krpmps*/\
+                         _IQ20(5.0), /*iq20MaxJrk_krpmps2*/\
+                         _IQ(0.0), /*iqSpeed_krpm*/\
+                         _IQ(0.0), /*iqSpeedQEP_krpm*/\
+                         _IQ(USER_MAX_VS_MAG_PU), /*iqOverModulation*/\
+                         _IQ(0.1 * USER_MOTOR_MAX_CURRENT), /*iqRsOnLineCurrent_A*/\
+                         _IQ(0.0), /*iqFlux_Wb*/\
+                         _IQ(0.0), /*iqTorque_Nm*/\
+                         0.0, /*fMagnCurr_A*/\
+                         0.0, /*fRr_Ohm*/\
+                         0.0, /*fRs_Ohm*/\
+                         0.0, /*fRsOnLine_Ohm*/\
+                         0.0, /*fLsd_H*/\
+                         0.0, /*fLsq_H*/\
+                         0.0, /*fFlux_VpHz*/\
+                         _IQ(0.0), /*iqKp_spd*/\
+                         _IQ(0.0), /*iqKi_spd*/\
+                         _IQ(0.0), /*iqKp_Id*/\
+                         _IQ(0.0), /*iqKi_Id*/\
+                         _IQ(0.0), /*iqKp_Iq*/\
+                         _IQ(0.0), /*iqKi_Iq*/\
+                         _IQ(0.0), /*iqVd*/\
+                         _IQ(0.0), /*iqVq*/\
+                         _IQ(0.0), /*iqVs*/\
+                         _IQ(0.9 * USER_MAX_VS_MAG_PU), /*iqVsRef*/\
+                         _IQ(0.0), /*iqVdcBus_kV*/\
+                         _IQ(0.0), /*iqId_A*/\
+                         _IQ(0.0), /*iqIq_A*/\
+                         _IQ(0.0), /*iqIs_A*/\
+                         {0,0,0}, /*I_bias*/\
+                         {0,0,0}/*V_bias*/}
+                         //ST_VARS_DEFAULTS}
+
+
+//! \setting the number for the different version of the motor driver
+#define LITTLE_DRIVER_48V       10
+#define LITTLE_DRIVER_48V2      11
+#define LITTLE_DRIVER_400V      12
+
+//! \choosing the version of driver you're using
 //#define DRIVER LITTLE_DRIVER_48V
 #define DRIVER LITTLE_DRIVER_48V2
-
-
 //#define DRIVER LITTLE_DRIVER_400V
 
 // **************************************************************************
@@ -220,7 +280,7 @@ extern "C" {
 //! \brief For higher PWM frequencies (60 KHz+ typical for low inductance, high current ripple motors) it is recommended to use the ePWM hardware
 //! \brief and adjustable ADC SOC to decimate the ADC conversion done interrupt to the control system, or to use the software Que example.
 //! \brief Otherwise you risk missing interrupts and disrupting the timing of the control state machine
-#define USER_PWM_FREQ_kHz                (20.0)	//(15.0) //30.0 Example, 8.0 - 30.0 KHz typical; 45-80 KHz may be required for very low inductance, high speed motors
+#define USER_PWM_FREQ_kHz                (20.0)//(20.0)	//(15.0) //30.0 Example, 8.0 - 30.0 KHz typical; 45-80 KHz may be required for very low inductance, high speed motors
 
 //! \brief Defines the maximum Voltage vector (Vs) magnitude allowed.  This value sets the maximum magnitude for the output of the
 //! \brief Id and Iq PI current controllers.  The Id and Iq current controller outputs are Vd and Vq.
@@ -250,7 +310,7 @@ extern "C" {
 // **************************************************************************
 //! \brief Defines the number of pwm clock ticks per isr clock tick
 //!        Note: Valid values are 1, 2 or 3 only
-#define USER_NUM_PWM_TICKS_PER_ISR_TICK        (1)
+#define USER_NUM_PWM_TICKS_PER_ISR_TICK        (1)//(1)//(2)<--when the pwm frequency set to 40KHZ
 
 //! \brief Defines the number of isr ticks (hardware) per controller clock tick (software)
 //! \brief Controller clock tick (CTRL) is the main clock used for all timing in the software
@@ -422,7 +482,7 @@ extern "C" {
 #define BL120S25_250W               105
 #define RICH_MOTOR                  110
 #define My_Motor                    111
-
+#define QSmotor_1k5W_205_45H_V2     112
 
 // IPM motors
 // If user provides separate Ls-d, Ls-q
@@ -443,7 +503,8 @@ extern "C" {
 //! \brief Uncomment the motor which should be included at compile
 //! \brief These motor ID settings and motor parameters are then available to be used by the control system
 //! \brief Once your ideal settings and parameters are identified update the motor section here so it is available in the binary code
-#define USER_MOTOR BL120S25_250W
+//#define USER_MOTOR BL120S25_250W
+#define USER_MOTOR QSmotor_1k5W_205_45H_V2
 //#define USER_MOTOR DELTA_C30604
 //#define USER_MOTOR CS60
 //#define USER_MOTOR RICH_MOTOR
@@ -477,6 +538,24 @@ extern "C" {
 #define USER_MOTOR_MAX_CURRENT          (1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
 #define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
 #define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder	//2500
+
+#elif (USER_MOTOR == QSmotor_1k5W_205_45H_V2)
+
+#define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
+#define USER_MOTOR_NUM_POLE_PAIRS       (16)            // PAIRS, not total poles. Used to calculate user RPM from rotor Hz only
+#define USER_MOTOR_Rr                   (NULL)         // Induction motors only, else NULL
+#define USER_MOTOR_Rs                   (0.026718786)//(0.0249023829)//(0.0189)//(0.0275586) //(1.55)    (2.76)             // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
+#define USER_MOTOR_Ls_d                 (8.64771027e-06)//(3.07328585e-09)//(0.0000013939463)//(0.000043478) //(0.00671) (0.00361) // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_Ls_q                 (8.64771027e-06)//(3.07328585e-09)//(0.0000013939463)//(0.000043478) //(0.00671)  // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_RATED_FLUX           (0.113901429)//(0.20280616)//(0.049257)   //(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)  //(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
+#define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
+
+#define USER_MOTOR_RES_EST_CURRENT      (2)//(1.5)//(0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+#define USER_MOTOR_IND_EST_CURRENT      (-2)//(-1.5)//(-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+#define USER_MOTOR_MAX_CURRENT          (8)//(1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+#define USER_MOTOR_FLUX_EST_FREQ_Hz     (10)//(20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
+#define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder //2500
+
 
 #elif (USER_MOTOR == BL120S25_250W)
 

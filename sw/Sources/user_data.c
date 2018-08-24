@@ -79,20 +79,44 @@ const char g_ai8DescReferSelect[][MAX_DESCRIPTION_LENGTH]={"Digital Operator", "
 const char g_ai8DescStopMethod[][MAX_DESCRIPTION_LENGTH]={"Ramp to Stop","Coast to Stop","DC Injection","Coast with Timer"};
 const char g_ai8DescEnable[][MAX_DESCRIPTION_LENGTH]={"Enable","Disable"};
 
+
+// FOR easy reading
+/*
+typedef struct _DM_Cell_
+{
+    void            *pValue;                                                        //input value
+    uint16_t        u16EEPromAddr, u16ModbusAdd;                                    //
+    uint16_t        u16DefValue, u16MaxValue, u16MinValue;                          //
+    uint16_t        u16Attribute;                                                   //output?
+    uint16_t        u16Unit;                                                        // UNIT  ex:ampere volts....
+    int32_t (*getCallbackFunction)(DM_Handle handle);
+    void (*setCallbackFunction)(DM_Handle handle, const struct _DM_Cell_ *pdmCell);
+
+} DM_Cell;
+
+*/
+
+
 const DM_Cell g_dmCellReserved    	= {&g_u16Reserved,  I2C_ADDRESS_INVALID, MODBUS_ADDRESS_INVALID,
 										0x0000,0x0000, 0x0000,
 										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point0,
 										DM_UNIT_None, NULL, NULL};
 const DM_FunCell g_dmFunCellReserved 	= {&g_dmCellReserved,  1, "Reserved",NULL};
 
-const DM_Cell g_dmCellFreqRef    	= {&gdmObj.i16RefFreqHz,  I2C_ADDRESS_INVALID, 0x0020,
-										0x0000,0x7fff, 0x8000,
-										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2 ,
-										DM_UNIT_Hz, NULL, NULL};
-const DM_Cell g_dmCellFreqOut    	= {NULL,   I2C_ADDRESS_INVALID, 0x0021,
-										 0x0000,0x7fff, 0x8000,
-										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2,
-										DM_UNIT_Hz, DM_getCallbackFreqOutHz, NULL};
+
+const DM_Cell g_dmCellFreqRef    	= {&gdmObj.i16RefFreqHz,
+                                 	   I2C_ADDRESS_INVALID, 0x0020,
+                                 	   0x0000,0x7fff,0x8000,
+                                 	   DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2 ,
+                                 	   DM_UNIT_Hz,
+                                 	   NULL,NULL};
+
+const DM_Cell g_dmCellFreqOut    	= {NULL,
+                                 	   I2C_ADDRESS_INVALID, 0x0021,
+                                 	   0x0000,0x7fff, 0x8000,
+                                 	   DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2,
+                                 	   DM_UNIT_Hz,
+                                 	   DM_getCallbackFreqOutHz, NULL};
 const DM_Cell g_dmCellCurrentOut  	= {NULL, I2C_ADDRESS_INVALID, 0x0022,
 										0x0000,0xffff, 0x0000,
 										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2,

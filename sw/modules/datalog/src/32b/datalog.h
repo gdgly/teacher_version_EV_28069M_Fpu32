@@ -76,6 +76,7 @@ extern "C" {
 //! \brief Defines the default initialization for the DATALOG object
 //!
                      
+/*
 #define DATALOG_DEFAULTS {        \
                             {NULL,  \
 							 NULL,  \
@@ -84,8 +85,15 @@ extern "C" {
 							false, \
                             0, \
                             0xC0 \
-	}
-
+    }
+*/
+#define DATALOG_DEFAULTS {        \
+                            {NULL, NULL, NULL},\
+                            true, \
+                            false, \
+                            0, \
+                            0xC0 \
+                           }
 
 
 // **************************************************************************
