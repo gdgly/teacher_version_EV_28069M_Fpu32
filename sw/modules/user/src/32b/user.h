@@ -69,62 +69,8 @@ extern "C" {
 
 
 //! \choosing the throttle value/sensitivity
-#define Throttle_MAX_out    _IQ(0.4)        //up to _IQ(1.0)
-#define Throttle_MIN_out    _IQ(0.0)
-
-
-
-//! \setting the initial value for the global variable of  gMotorVar(the main parameters using during the execution process)
-#define MOTOR_Vars_INIT {false, /*bFlag_enableSys*/\
-                         false, /*bFlag_Run_Identify*/\
-                         false, /*bFlag_MotorIdentified*/\
-                         true, /*bFlag_enableForceAngle*/\
-                         false, /*bFlag_enableFieldWeakening*/\
-                         false, /*bFlag_enableRsRecalc*/\
-                         true, /*bFlag_enableUserParams*/\
-                         false, /*bFlag_enableOffsetcalc*/\
-                         false, /*bFlag_enablePowerWarp*/\
-                         CTRL_State_Idle, /*CtrlState*/\
-                         EST_State_Idle, /*EstState*/\
-                         USER_ErrorCode_NoError, /*UserErrorCode*/\
-                         {0,CTRL_TargetProc_Unknown,0,0}, /*CtrlVersion*/\
-                         _IQ(0.0), /*iqIdRef_A*/\
-                         _IQ(0.0), /*iqIqRef_A*/\
-                         _IQ(0.1), /*iqStopSpeedRef_krpm*/\
-                         _IQ(0.1), /*iqSpeedRef_krpm*/\
-                         _IQ(0.0), /*iqSpeedTraj_krpm*/\
-                         _IQ(0.2), /*iqMaxAccel_krpmps*/\
-                         _IQ20(5.0), /*iq20MaxJrk_krpmps2*/\
-                         _IQ(0.0), /*iqSpeed_krpm*/\
-                         _IQ(0.0), /*iqSpeedQEP_krpm*/\
-                         _IQ(USER_MAX_VS_MAG_PU), /*iqOverModulation*/\
-                         _IQ(0.1 * USER_MOTOR_MAX_CURRENT), /*iqRsOnLineCurrent_A*/\
-                         _IQ(0.0), /*iqFlux_Wb*/\
-                         _IQ(0.0), /*iqTorque_Nm*/\
-                         0.0, /*fMagnCurr_A*/\
-                         0.0, /*fRr_Ohm*/\
-                         0.0, /*fRs_Ohm*/\
-                         0.0, /*fRsOnLine_Ohm*/\
-                         0.0, /*fLsd_H*/\
-                         0.0, /*fLsq_H*/\
-                         0.0, /*fFlux_VpHz*/\
-                         _IQ(0.0), /*iqKp_spd*/\
-                         _IQ(0.0), /*iqKi_spd*/\
-                         _IQ(0.0), /*iqKp_Id*/\
-                         _IQ(0.0), /*iqKi_Id*/\
-                         _IQ(0.0), /*iqKp_Iq*/\
-                         _IQ(0.0), /*iqKi_Iq*/\
-                         _IQ(0.0), /*iqVd*/\
-                         _IQ(0.0), /*iqVq*/\
-                         _IQ(0.0), /*iqVs*/\
-                         _IQ(0.9 * USER_MAX_VS_MAG_PU), /*iqVsRef*/\
-                         _IQ(0.0), /*iqVdcBus_kV*/\
-                         _IQ(0.0), /*iqId_A*/\
-                         _IQ(0.0), /*iqIq_A*/\
-                         _IQ(0.0), /*iqIs_A*/\
-                         {0,0,0}, /*I_bias*/\
-                         {0,0,0}/*V_bias*/}
-                         //ST_VARS_DEFAULTS}
+//#define Throttle_MAX_out    _IQ(0.4)        //up to _IQ(1.0)
+//#define Throttle_MIN_out    _IQ(0.0)
 
 
 //! \setting the number for the different version of the motor driver

@@ -93,10 +93,6 @@
 
 //! \brief Initialization values of global variables
 //!
-
-
-//origin
-/*
 #define MOTOR_Vars_INIT {false, \
                          false, \
                          false, \
@@ -147,115 +143,9 @@
                          {0,0,0}, \
                          {0,0,0}}
 						 //ST_VARS_DEFAULTS}
-*/
+
 
 //! \setting the initial value for the global variable of  gMotorVar(the main parameters using during the execution process)
-
-/*
-#define init_bFlag_enableSys                false
-#define init_bFlag_Run_identify             false
-#define init_bFlag_MotorIdentified          false
-#define init_bFlag_enableForceAngle         true
-#define init_bFlag_enableFieldWeakening     false
-#define init_bFlag_enableRsRecalc           false
-#define init_bFlag_enableUserParams         true
-#define init_bFlag_enableOffsetcalc         false
-#define init_bFlag_enablePowerWrap          false
-#define init_CTRLState                      CTRL_State_Idle
-#define init_ESTState                       EST_State_Idle
-#define init_USERErrorCode                  USER_ErrorCode_NoError
-#define init_CtrlVersion                    {0,CTRL_TargetProc_Unknown,0,0}
-#define init_iqIdRef                        _IO(0.0)
-#define init_iqIqRef                        _IQ(0.0)
-#define init_iqStopSpeedRef_krpm            _IQ(0.1)
-#define init_iqSpeedRef_krpm                _IQ(0.1)
-#define init_iqSpeedTraj_krpm               _IQ(0.0)
-#define init_iqMaxAccel_krpmps              _IQ(0.2)
-#define init_iq20MaxJrk_krpmps2             _IQ20(5.0)
-#define init_iqSpeed_krpm                   _IQ(0.0)
-#define init_SpeedQEP_krpm                  _IQ(0.0)
-#define init_iqOverModulation               _IQ(USER_MAX_VS_MAG_PU)
-#define init_iqRsOnLineCurrent_A            _IQ(0.1 * USER_MOTOR_MAX_CURRENT)
-#define init_iqFlux_Wb                      _IQ(0.0)
-#define init_iqTorque_Nm                    _IQ(0.0)
-#define init_fMagnCurr_A                    0.0
-#define init_fRr_Ohm                        0.0
-#define init_fRs_Ohm                        0.0
-#define init_fRsOnline_Ohm                  0.0
-#define init_fLsd_H                         0.0
-#define init_fLsq_H                         0.0
-#define init_fFlux_VpHz                     0.0
-#define init_iqKp_spd                       _IQ(0.0)
-#define init_iqKi_spd                       _IQ(0.0)
-#define init_iqKp_Id                        _IQ(0.0)
-#define init_iqKi_Id                        _IQ(0.0)
-#define init_iqKp_Iq                        _IQ(0.0)
-#define init_iqKi_Iq                        _IQ(0.0)
-#define init_iqVd                           _IQ(0.0)
-#define init_iqVq                           _IQ(0.0)
-#define init_iqVs                           _IQ(0.0)
-#define init_iqVsRef                        _IQ(0.9*USER_MAX_VS_MAG_PU)
-#define init_iqVdcRef_kV                    _IQ(0.0)
-#define init_Id_A                           _IQ(0.0)
-#define init_Iq_A                           _IQ(0.0)
-#define init_Is_A                           _IQ(0.0)
-#define init_I_bias                         {0,0,0}
-#define init_V_bias                         {0,0,0}
-
-
-
-
-#define MOTOR_Vars_INIT {init_bFlag_enableSys, \
-                         init_bFlag_Run_identify, \
-                         init_bFlag_MotorIdentified, \
-                         init_bFlag_enableForceAngle, \
-                         init_bFlag_enableFieldWeakening, \
-                         init_bFlag_enableRsRecalc, \
-                         init_bFlag_enableUserParams, \
-                         init_bFlag_enableOffsetcalc, \
-                         init_bFlag_enablePowerWrap, \
-                         init_CTRLState, \
-                         init_ESTState, \
-                         init_USERErrorCode, \
-                         init_CtrlVersion, \
-                         init_iqIdRef, \
-                         init_iqIqRef, \
-                         init_iqStopSpeedRef_krpm, \
-                         init_iqSpeedRef_krpm, \
-                         init_iqSpeedTraj_krpm, \
-                         init_iqMaxAccel_krpmps, \
-                         init_iq20MaxJrk_krpmps2, \
-                         init_iqSpeed_krpm, \
-                         init_SpeedQEP_krpm, \
-                         init_iqOverModulation, \
-                         init_iqRsOnLineCurrent_A, \
-                         init_iqFlux_Wb, \
-                         init_iqTorque_Nm, \
-                         init_fMagnCurr_A, \
-                         init_fRr_Ohm, \
-                         init_fRs_Ohm, \
-                         init_fRsOnline_Ohm, \
-                         init_fLsd_H, \
-                         init_fLsq_H, \
-                         init_fFlux_VpHz, \
-                         init_iqKp_spd, \
-                         init_iqKi_spd, \
-                         init_iqKp_Id, \
-                         init_iqKi_Id, \
-                         init_iqKp_Iq, \
-                         init_iqKi_Iq, \
-                         init_iqVd, \
-                         init_iqVq, \
-                         init_iqVs, \
-                         init_iqVsRef, \
-                         init_iqVdcRef_kV, \
-                         init_Id_A, \
-                         init_Iq_A, \
-                         init_Is_A, \
-                         init_I_bias, \
-                         init_V_bias}
-                         //ST_VARS_DEFAULTS}
-*/
 
 
 // **************************************************************************

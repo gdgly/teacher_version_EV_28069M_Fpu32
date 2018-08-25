@@ -295,9 +295,9 @@ void main(void)
 	gThrottleHandle = Throttle_init(&gThrottleObj,sizeof(gThrottleObj));
 	{
 
-	    //Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.1), _IQ(0.0));//origin
-	    //Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.4), _IQ(0.0));//this decrease the range of the throttle,since the throttle while be to sensitive using the original parameters
-	    Throttle_setParams(gThrottleHandle,false,_IQ(USER_EXT_ADC_SF),_IQ(0.1),Throttle_MAX_out,Throttle_MIN_out);
+	    //Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(1.0), _IQ(0.0));//origin
+	    Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.4), _IQ(0.0));//this decrease the range of the throttle,since the throttle while be to sensitive using the original parameters
+
 	}
 
 #ifndef F2802xF
