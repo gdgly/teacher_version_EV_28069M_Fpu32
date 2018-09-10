@@ -249,7 +249,6 @@ typedef struct _USER_Params_
 } USER_Params;
 
 
-
 #ifdef __cplusplus
 }
 #endif // extern "C"

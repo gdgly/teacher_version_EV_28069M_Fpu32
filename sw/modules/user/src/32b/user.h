@@ -67,21 +67,13 @@ extern "C" {
 #endif
 
 
+#define LITTLE_DRIVER_48V	10
+#define LITTLE_DRIVER_48V2   11
+#define LITTLE_DRIVER_300V	12
 
-//! \choosing the throttle value/sensitivity
-//#define Throttle_MAX_out    _IQ(0.4)        //up to _IQ(1.0)
-//#define Throttle_MIN_out    _IQ(0.0)
-
-
-//! \setting the number for the different version of the motor driver
-#define LITTLE_DRIVER_48V       10
-#define LITTLE_DRIVER_48V2      11
-#define LITTLE_DRIVER_400V      12
-
-//! \choosing the version of driver you're using
 //#define DRIVER LITTLE_DRIVER_48V
 #define DRIVER LITTLE_DRIVER_48V2
-//#define DRIVER LITTLE_DRIVER_400V
+//#define DRIVER LITTLE_DRIVER_300V
 
 // **************************************************************************
 // the defines
@@ -102,9 +94,9 @@ extern "C" {
 //! \brief WARNING: if you know the value of your Bemf constant, and you know you are operating at a multiple speed due to field weakening, be sure to set this value higher than the expected Bemf voltage
 //! \brief It is recommended to start with a value ~3x greater than the USER_ADC_FULL_SCALE_VOLTAGE_V and increase to 4-5x if scenarios where a Bemf calculation may exceed these limits
 //! \brief This value is also used to calculate the minimum flux value: USER_IQ_FULL_SCALE_VOLTAGE_V/USER_EST_FREQ_Hz/0.7
-#if (DRIVER == LITTLE_DRIVER_400V)
+#if (DRIVER == LITTLE_DRIVER_300V)
 	#define USER_IQ_FULL_SCALE_VOLTAGE_V      (450.0)	//(450.0)   // 450.0 Example for hvkit_rev1p1 typical usage
-	#define USER_ADC_FULL_SCALE_VOLTAGE_V     (412.5)		//(405.8)	//(390)      // 409.6 hvkit_rev1p1 voltage scaling
+	#define USER_ADC_FULL_SCALE_VOLTAGE_V     (510.0)		//(405.8)	//(390)      // 409.6 hvkit_rev1p1 voltage scaling
 
 #elif  (DRIVER == LITTLE_DRIVER_48V)
 //! \brief Defines the maximum voltage at the input to the AD converter
@@ -138,7 +130,7 @@ extern "C" {
 //! \brief Defines the maximum current at the AD converter
 //! \brief The value that will be represented by the maximum ADC input (3.3V) and conversion (0FFFh)
 //! \brief Hardware dependent, this should be based on the current sensing and scaling to the ADC input
-#if (DRIVER == LITTLE_DRIVER_400V)
+#if (DRIVER == LITTLE_DRIVER_300V)
 	#define USER_ADC_FULL_SCALE_CURRENT_A       (19.89)		//(19.89)     // 19.89 hvkit_rev1p1 current scaling
 #elif (DRIVER == LITTLE_DRIVER_48V)
 	#define USER_ADC_FULL_SCALE_CURRENT_A       (19.89)		//(19.89)     // 19.89 hvkit_rev1p1 current scaling
@@ -172,14 +164,14 @@ extern "C" {
 //! \brief Must be (3)
 #define USER_NUM_VOLTAGE_SENSORS            (3) // 3 Required
 
-#if (DRIVER == LITTLE_DRIVER_400V)
-	#define   I_A_offset    (0.9370)
-	#define   I_B_offset    (0.9570)
-	#define   I_C_offset    (0.9136)
+#if (DRIVER == LITTLE_DRIVER_300V)
+	#define   I_A_offset    (0.53997)	//(0.9370)
+	#define   I_B_offset    (0.5441)	//(0.9570)
+	#define   I_C_offset    (0.5471)	//(0.9136)
 
-	#define   V_A_offset    (0.2092)
-	#define   V_B_offset    (0.2129)
-	#define   V_C_offset    (0.2103)
+	#define   V_A_offset    (0.05973)	//(0.2092)
+	#define   V_B_offset    (0.05795)	//(0.2129)
+	#define   V_C_offset    (0.05668)	//(0.2103)
 #elif (DRIVER == LITTLE_DRIVER_48V)
 
 	#define   I_A_offset    (0.95164)
@@ -191,13 +183,13 @@ extern "C" {
 	#define   V_C_offset    (0.2123)
 #elif (DRIVER == LITTLE_DRIVER_48V2)
 
-    #define   I_A_offset    (0.98757)    //(0.98002)   //(0.89878)   //(0.98997)
-    #define   I_B_offset    (0.98850)    //(0.94316)   //(0.93859)   //(0.99242)
-    #define   I_C_offset    (0.98225)    //(0.95917)   //(0.92815)   //(0.98669)
+    #define   I_A_offset    (0.54155)    //(0.98002)   //(0.89878)   //(0.98997)
+    #define   I_B_offset    (0.54829)    //(0.94316)   //(0.93859)   //(0.99242)
+    #define   I_C_offset    (0.52711)    //(0.95917)   //(0.92815)   //(0.98669)
 
-    #define   V_A_offset    (0.23958)    //(0.23992)   //(0.23847)   //(0.24069) for 48V
-    #define   V_B_offset    (0.24116)    //(0.23908)   //(0.23751)   //(0.24279)
-    #define   V_C_offset    (0.24099)    //(0.23896)   //(0.23742)   //(0.23861)
+    #define   V_A_offset    (0.24068)    //(0.23992)   //(0.23847)   //(0.24069) for 48V
+    #define   V_B_offset    (0.24173)    //(0.23908)   //(0.23751)   //(0.24279)
+    #define   V_C_offset    (0.23947)    //(0.23896)   //(0.23742)   //(0.23861)
 
 #else
 //! \brief ADC current offsets for A, B, and C phases
@@ -226,7 +218,7 @@ extern "C" {
 //! \brief For higher PWM frequencies (60 KHz+ typical for low inductance, high current ripple motors) it is recommended to use the ePWM hardware
 //! \brief and adjustable ADC SOC to decimate the ADC conversion done interrupt to the control system, or to use the software Que example.
 //! \brief Otherwise you risk missing interrupts and disrupting the timing of the control state machine
-#define USER_PWM_FREQ_kHz                (20.0)//(20.0)	//(15.0) //30.0 Example, 8.0 - 30.0 KHz typical; 45-80 KHz may be required for very low inductance, high speed motors
+#define USER_PWM_FREQ_kHz                (20.0)	//(15.0) //30.0 Example, 8.0 - 30.0 KHz typical; 45-80 KHz may be required for very low inductance, high speed motors
 
 //! \brief Defines the maximum Voltage vector (Vs) magnitude allowed.  This value sets the maximum magnitude for the output of the
 //! \brief Id and Iq PI current controllers.  The Id and Iq current controller outputs are Vd and Vq.
@@ -256,7 +248,7 @@ extern "C" {
 // **************************************************************************
 //! \brief Defines the number of pwm clock ticks per isr clock tick
 //!        Note: Valid values are 1, 2 or 3 only
-#define USER_NUM_PWM_TICKS_PER_ISR_TICK        (1)//(1)//(2)<--when the pwm frequency set to 40KHZ
+#define USER_NUM_PWM_TICKS_PER_ISR_TICK        (1)	//(2)
 
 //! \brief Defines the number of isr ticks (hardware) per controller clock tick (software)
 //! \brief Controller clock tick (CTRL) is the main clock used for all timing in the software
@@ -373,8 +365,8 @@ extern "C" {
 // **************************************************************************
 //! \brief Defines the analog voltage filter pole location, Hz
 //! \brief Must match the hardware filter for Vph
-#if (DRIVER == LITTLE_DRIVER_400V)
-	#define USER_VOLTAGE_FILTER_POLE_Hz   (234)		//(372.5)   // 1/(2*pi*68n*10k)
+#if (DRIVER == LITTLE_DRIVER_300V)
+	#define USER_VOLTAGE_FILTER_POLE_Hz   (482.3)		//(372.5)   // 1/(2*pi*100n*3.3k)
 #elif (DRIVER == LITTLE_DRIVER_48V)
 	#define USER_VOLTAGE_FILTER_POLE_Hz   (234)		//(372.5)   // 1/(2*pi*68n*10k)
 #elif (DRIVER == LITTLE_DRIVER_48V2)
@@ -428,7 +420,7 @@ extern "C" {
 #define BL120S25_250W               105
 #define RICH_MOTOR                  110
 #define My_Motor                    111
-#define QSmotor_1k5W_205_45H_V2     112
+
 
 // IPM motors
 // If user provides separate Ls-d, Ls-q
@@ -450,11 +442,11 @@ extern "C" {
 //! \brief These motor ID settings and motor parameters are then available to be used by the control system
 //! \brief Once your ideal settings and parameters are identified update the motor section here so it is available in the binary code
 //#define USER_MOTOR BL120S25_250W
-#define USER_MOTOR QSmotor_1k5W_205_45H_V2
-//#define USER_MOTOR DELTA_C30604
+#define USER_MOTOR DELTA_C30604
 //#define USER_MOTOR CS60
 //#define USER_MOTOR RICH_MOTOR
 //#define USER_MOTOR Estun_EMJ_04APB22
+//#define USER_MOTOR AD_LEE
 
 //#define USER_MOTOR Anaheim_BLY172S
 //#define USER_MOTOR My_Motor
@@ -468,6 +460,7 @@ extern "C" {
 //#define USER_MOTOR Weg_00118ET3E143T_W22_460
 //#define USER_MOTOR Oriental_4IK25A_SH_230
 //#define USER_MOTOR Dayton_2N865T
+
 #if (USER_MOTOR == CS60)
 
 #define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
@@ -479,39 +472,21 @@ extern "C" {
 #define USER_MOTOR_RATED_FLUX           (0.04981)	//(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)	//(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
 #define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
 
-#define USER_MOTOR_RES_EST_CURRENT      (0.8)			//(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
-#define USER_MOTOR_IND_EST_CURRENT      (-0.8)			//(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+#define USER_MOTOR_RES_EST_CURRENT      (0.5)			//(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+#define USER_MOTOR_IND_EST_CURRENT      (-0.5)			//(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
 #define USER_MOTOR_MAX_CURRENT          (1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
-#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
+#define USER_MOTOR_FLUX_EST_FREQ_Hz     (30.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
 #define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder	//2500
-
-#elif (USER_MOTOR == QSmotor_1k5W_205_45H_V2)
-
-#define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
-#define USER_MOTOR_NUM_POLE_PAIRS       (16)            // PAIRS, not total poles. Used to calculate user RPM from rotor Hz only
-#define USER_MOTOR_Rr                   (NULL)         // Induction motors only, else NULL
-#define USER_MOTOR_Rs                   (0.026718786)//(0.0249023829)//(0.0189)//(0.0275586) //(1.55)    (2.76)             // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
-#define USER_MOTOR_Ls_d                 (8.64771027e-06)//(3.07328585e-09)//(0.0000013939463)//(0.000043478) //(0.00671) (0.00361) // For PM, Identified average stator inductance  (Henry, float)
-#define USER_MOTOR_Ls_q                 (8.64771027e-06)//(3.07328585e-09)//(0.0000013939463)//(0.000043478) //(0.00671)  // For PM, Identified average stator inductance  (Henry, float)
-#define USER_MOTOR_RATED_FLUX           (0.113901429)//(0.20280616)//(0.049257)   //(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)  //(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
-#define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
-
-#define USER_MOTOR_RES_EST_CURRENT      (2)//(1.5)//(0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
-#define USER_MOTOR_IND_EST_CURRENT      (-2)//(-1.5)//(-0.8)          //(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
-#define USER_MOTOR_MAX_CURRENT          (8)//(1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
-#define USER_MOTOR_FLUX_EST_FREQ_Hz     (10)//(20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
-#define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder //2500
-
 
 #elif (USER_MOTOR == BL120S25_250W)
 
 #define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
 #define USER_MOTOR_NUM_POLE_PAIRS       (4)            // PAIRS, not total poles. Used to calculate user RPM from rotor Hz only
 #define USER_MOTOR_Rr                   (NULL)         // Induction motors only, else NULL
-#define USER_MOTOR_Rs                   (0.29247)    //(0.3542)    //(0.3138)    //(0.26197) //(1.55)    (2.76)             // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
-#define USER_MOTOR_Ls_d                 (0.0003781) //(0.0004161) //(0.0003403) //(0.0003812) //(0.00671) (0.00361) // For PM, Identified average stator inductance  (Henry, float)
-#define USER_MOTOR_Ls_q                 (0.0003781)  //(0.0004161)  //(0.0003403)  //(0.0003812) //(0.00671)  // For PM, Identified average stator inductance  (Henry, float)
-#define USER_MOTOR_RATED_FLUX           (0.11662)   //(0.1159)    //(0.1149754) //(0.116735)   //(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)  //(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
+#define USER_MOTOR_Rs                   (0.3192)	//(0.29247)    //(0.3542)    //(0.3138)    //(0.26197) //(1.55)    (2.76)             // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
+#define USER_MOTOR_Ls_d                 (0.001060)	//(0.0003781) //(0.0004161) //(0.0003403) //(0.0003812) //(0.00671) (0.00361) // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_Ls_q                 (0.001060)	//(0.0003781)  //(0.0004161)  //(0.0003403)  //(0.0003812) //(0.00671)  // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_RATED_FLUX           (0.16725)	//(0.11662)   //(0.1159)    //(0.1149754) //(0.116735)   //(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)  //(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
 #define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
 
 #define USER_MOTOR_RES_EST_CURRENT      (0.8)           //(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
@@ -520,22 +495,37 @@ extern "C" {
 #define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
 #define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder //2500
 
-#elif (USER_MOTOR ==DELTA_C30604)
+#elif (USER_MOTOR == AD_LEE)
 #define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
 #define USER_MOTOR_NUM_POLE_PAIRS       (4)            // PAIRS, not total poles. Used to calculate user RPM from rotor Hz only
 #define USER_MOTOR_Rr                   (NULL)         // Induction motors only, else NULL
-#define USER_MOTOR_Rs                   (1.3356)	//(1.55)	(2.76) 			   // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
-#define USER_MOTOR_Ls_d                 (0.00610)	//(0.00671)	(0.00361) // For PM, Identified average stator inductance  (Henry, float)
-#define USER_MOTOR_Ls_q                 (0.00610)	//(0.00671)	 // For PM, Identified average stator inductance  (Henry, float)
-#define USER_MOTOR_RATED_FLUX           (0.2670)	//(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)	//(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
+#define USER_MOTOR_Rs                   (0.70242)	//(1.3356)	//(1.55)	(2.76) 			   // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
+#define USER_MOTOR_Ls_d                 (0.003947)	//(0.00610)	//(0.00671)	(0.00361) // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_Ls_q                 (0.003947)	//(0.00610)	//(0.00671)	 // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_RATED_FLUX           (0.57421)   //(0.2670)	//(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)	//(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
 #define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
 
 #define USER_MOTOR_RES_EST_CURRENT      (0.8)			//(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
 #define USER_MOTOR_IND_EST_CURRENT      (-0.8)			//(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
-#define USER_MOTOR_MAX_CURRENT          (1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+#define USER_MOTOR_MAX_CURRENT          (10)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
 #define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
 #define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder	//2500
 
+#elif (USER_MOTOR ==DELTA_C30604)
+#define USER_MOTOR_TYPE                 MOTOR_Type_Pm  // Motor_Type_Pm (All Synchronous: BLDC, PMSM, SMPM, IPM) or Motor_Type_Induction (Asynchronous ACI)
+#define USER_MOTOR_NUM_POLE_PAIRS       (4)            // PAIRS, not total poles. Used to calculate user RPM from rotor Hz only
+#define USER_MOTOR_Rr                   (NULL)         // Induction motors only, else NULL
+#define USER_MOTOR_Rs                   (1.864)	//(1.3356)	//(1.55)	(2.76) 			   // Identified phase to neutral resistance in a Y equivalent circuit (Ohms, float)
+#define USER_MOTOR_Ls_d                 (0.0066414)	//(0.00610)	//(0.00671)	(0.00361) // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_Ls_q                 (0.0066414)	//(0.00610)	//(0.00671)	 // For PM, Identified average stator inductance  (Henry, float)
+#define USER_MOTOR_RATED_FLUX           (0.2963)   //(0.2670)	//(0.264) (17.4*60./1000./1.732/USER_MOTOR_NUM_POLE_PAIRS)	//(0.8165*110.0/60.0)     //  17.4 V/Krpm    // Identified TOTAL flux linkage between the rotor and the stator (V/Hz)
+#define USER_MOTOR_MAGNETIZING_CURRENT  (NULL)
+
+#define USER_MOTOR_RES_EST_CURRENT      (0.5)			//(1.0)          // During Motor ID, maximum current (Amperes, float) used for Rs estimation, 10-20% rated current
+#define USER_MOTOR_IND_EST_CURRENT      (-0.5)			//(-1.0)         // During Motor ID, maximum current (negative Amperes, float) used for Ls estimation, use just enough to enable rotation
+#define USER_MOTOR_MAX_CURRENT          (1)         // CRITICAL: Used during ID and run-time, sets a limit on the maximum current command output of the provided Speed PI Controller to the Iq controller
+#define USER_MOTOR_FLUX_EST_FREQ_Hz     (20.0)         // During Motor ID, maximum commanded speed (Hz, float), ~10% rated
+#define USER_MOTOR_ENCODER_LINES        (2000.0)       // Number of lines on the motor's quadrature encoder	//2500
 
 
 

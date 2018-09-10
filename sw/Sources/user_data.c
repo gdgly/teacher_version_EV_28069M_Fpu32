@@ -79,44 +79,20 @@ const char g_ai8DescReferSelect[][MAX_DESCRIPTION_LENGTH]={"Digital Operator", "
 const char g_ai8DescStopMethod[][MAX_DESCRIPTION_LENGTH]={"Ramp to Stop","Coast to Stop","DC Injection","Coast with Timer"};
 const char g_ai8DescEnable[][MAX_DESCRIPTION_LENGTH]={"Enable","Disable"};
 
-
-// FOR easy reading
-/*
-typedef struct _DM_Cell_
-{
-    void            *pValue;                                                        //input value
-    uint16_t        u16EEPromAddr, u16ModbusAdd;                                    //
-    uint16_t        u16DefValue, u16MaxValue, u16MinValue;                          //
-    uint16_t        u16Attribute;                                                   //output?
-    uint16_t        u16Unit;                                                        // UNIT  ex:ampere volts....
-    int32_t (*getCallbackFunction)(DM_Handle handle);
-    void (*setCallbackFunction)(DM_Handle handle, const struct _DM_Cell_ *pdmCell);
-
-} DM_Cell;
-
-*/
-
-
 const DM_Cell g_dmCellReserved    	= {&g_u16Reserved,  I2C_ADDRESS_INVALID, MODBUS_ADDRESS_INVALID,
 										0x0000,0x0000, 0x0000,
 										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point0,
 										DM_UNIT_None, NULL, NULL};
 const DM_FunCell g_dmFunCellReserved 	= {&g_dmCellReserved,  1, "Reserved",NULL};
 
-
-const DM_Cell g_dmCellFreqRef    	= {&gdmObj.i16RefFreqHz,
-                                 	   I2C_ADDRESS_INVALID, 0x0020,
-                                 	   0x0000,0x7fff,0x8000,
-                                 	   DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2 ,
-                                 	   DM_UNIT_Hz,
-                                 	   NULL,NULL};
-
-const DM_Cell g_dmCellFreqOut    	= {NULL,
-                                 	   I2C_ADDRESS_INVALID, 0x0021,
-                                 	   0x0000,0x7fff, 0x8000,
-                                 	   DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2,
-                                 	   DM_UNIT_Hz,
-                                 	   DM_getCallbackFreqOutHz, NULL};
+const DM_Cell g_dmCellFreqRef    	= {&gdmObj.i16RefFreqHz,  I2C_ADDRESS_INVALID, 0x0020,
+										0x0000,0x7fff, 0x8000,
+										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2 ,
+										DM_UNIT_Hz, NULL, NULL};
+const DM_Cell g_dmCellFreqOut    	= {NULL,   I2C_ADDRESS_INVALID, 0x0021,
+										 0x0000,0x7fff, 0x8000,
+										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2,
+										DM_UNIT_Hz, DM_getCallbackFreqOutHz, NULL};
 const DM_Cell g_dmCellCurrentOut  	= {NULL, I2C_ADDRESS_INVALID, 0x0022,
 										0x0000,0xffff, 0x0000,
 										DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point2,
@@ -443,15 +419,15 @@ const DM_Function* g_dmFunbArray[] = {&g_dmFunb1, &g_dmFunb2, &g_dmFunb3, &g_dmF
 
 const DM_Function* g_dmFunbArray[] = {&g_dmFunb1, &g_dmFunb2 };
 
-const DM_Cell g_dmCellResEstCurrent  = {&gdmObj.i16ResEstCurrent, 0x30, 0x0200,
+const DM_Cell g_dmCellResEstCurrent  = {&gdmObj.i16ResEstCurrent, 0x40, 0x0200,
 									10,2000, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Amp, NULL, DM_setCallbackResEstCurrent};
-const DM_Cell g_dmCellIndEstCurrent  = {&gdmObj.i16IndEstCurrent, 0x32, 0x0201,
+const DM_Cell g_dmCellIndEstCurrent  = {&gdmObj.i16IndEstCurrent, 0x42, 0x0201,
 									(uint16_t)(-10),(uint16_t)(-1), (uint16_t)(-2000),
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Amp, NULL, DM_setCallbackIndEstCurrent};
-const DM_Cell g_dmCellFluxEstHz  = {&gdmObj.i16FluxEstHz, 0x34, 0x0202,
+const DM_Cell g_dmCellFluxEstHz  = {&gdmObj.i16FluxEstHz, 0x44, 0x0202,
 									200, 2000, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Hz, NULL, DM_setCallbackFluxEstHz};
@@ -467,37 +443,37 @@ const DM_FunCell* g_dmFunCellArrayC1[] = {&g_dmFunCellC1_01, &g_dmFunCellC1_02, 
 
 const DM_Function g_dmFunC1 ={&g_dmFunCellArrayC1[0], 3, "C1","PreTune"};
 
-const DM_Cell g_dmCellVBias1  = {&gdmObj.u16VBias1, 0x36, 0x0203,
-									500,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
-									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellVBias2  = {&gdmObj.u16VBias2, 0x38, 0x0204,
-									500,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
-									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellVBias3  = {&gdmObj.u16VBias3, 0x3A, 0x0205,
-									500,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
-									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellIBias1  = {&gdmObj.u16IBias1, 0x3C, 0x0206,
-									500,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
-									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellIBias2  = {&gdmObj.u16IBias2, 0x3E, 0x0207,
-									500,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
-									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellIBias3  = {&gdmObj.u16IBias3, 0x40, 0x0208,
-									500,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
-									DM_UNIT_None, NULL, NULL};
+const DM_Cell g_dmCellVBias1  = {&gdmObj.u16VBias1, 0x50, 0x0203,
+									5000,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+									DM_UNIT_None, NULL, NULL};	//};
+const DM_Cell g_dmCellVBias2  = {&gdmObj.u16VBias2, 0x52, 0x0204,
+									5000,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+									DM_UNIT_None, NULL, NULL};	//DM_setcallbackVBias2};
+const DM_Cell g_dmCellVBias3  = {&gdmObj.u16VBias3, 0x54, 0x0205,
+									5000,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+									DM_UNIT_None, NULL, NULL};	//DM_setcallbackVBias3};
+const DM_Cell g_dmCellIBias1  = {&gdmObj.u16IBias1, 0x56, 0x0206,
+									5000,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+									DM_UNIT_None, NULL, NULL};	//DM_setcallbackIBias1};
+const DM_Cell g_dmCellIBias2  = {&gdmObj.u16IBias2, 0x58, 0x0207,
+									5000,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+									DM_UNIT_None, NULL, NULL};	//DM_setcallbackIBias2};
+const DM_Cell g_dmCellIBias3  = {&gdmObj.u16IBias3, 0x5A, 0x0208,
+									5000,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+									DM_UNIT_None, NULL, NULL};	//DM_setcallbackIBias3};
 
 const DM_FunCell g_dmFunCellC2_01 	= {&g_dmCellVBias1,  1, "Vbias #1",NULL};
 const DM_FunCell g_dmFunCellC2_02 	= {&g_dmCellVBias2,  2, "Vbias #2",NULL};
 const DM_FunCell g_dmFunCellC2_03 	= {&g_dmCellVBias3,  3, "Vbias #3",NULL};
-const DM_FunCell g_dmFunCellC2_04 	= {&g_dmCellIBias1,  1, "Ibias #1",NULL};
-const DM_FunCell g_dmFunCellC2_05 	= {&g_dmCellIBias2,  2, "Ibias #2",NULL};
-const DM_FunCell g_dmFunCellC2_06 	= {&g_dmCellIBias3,  3, "Ibias #3",NULL};
+const DM_FunCell g_dmFunCellC2_04 	= {&g_dmCellIBias1,  4, "Ibias #1",NULL};
+const DM_FunCell g_dmFunCellC2_05 	= {&g_dmCellIBias2,  5, "Ibias #2",NULL};
+const DM_FunCell g_dmFunCellC2_06 	= {&g_dmCellIBias3,  6, "Ibias #3",NULL};
 
 const DM_FunCell* g_dmFunCellArrayC2[] = {&g_dmFunCellC2_01, &g_dmFunCellC2_02, &g_dmFunCellC2_03,
 										  &g_dmFunCellC2_04, &g_dmFunCellC2_05, &g_dmFunCellC2_06};
@@ -509,42 +485,42 @@ const DM_Function* g_dmFunCArray[] = {&g_dmFunC1, &g_dmFunC2 };
 
 const char g_ai8DescMotorType[][MAX_DESCRIPTION_LENGTH]={"Induction","PM Motor"};
 
-const DM_Cell g_dmCellMotorType  = {&gUserParams.motor_type, 0x50, 0x0250,
+const DM_Cell g_dmCellMotorType  = {&gUserParams.motor_type, 0x60, 0x0250,
 									MOTOR_Type_Pm,MOTOR_Type_Pm, MOTOR_Type_Induction,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
 									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellPolePair  = {&gUserParams.u16motor_numPolePairs, 0x52, 0x0251,
+const DM_Cell g_dmCellPolePair  = {&gUserParams.u16motor_numPolePairs, 0x62, 0x0251,
 									4,50, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
 									DM_UNIT_None, NULL, NULL};
 
-const DM_Cell g_dmCellMaxCurrent  = {&gdmObj.i16MaxCurrent, 0x54, 0x0252,
+const DM_Cell g_dmCellMaxCurrent  = {&gdmObj.i16MaxCurrent, 0x64, 0x0252,
 									180,500, 1,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_Int16 | DM_ATTRIBUTE_Point1,
 									DM_UNIT_Amp, NULL, DM_setCallbackMaxCurrent};
 
-const DM_Cell g_dmCellResStator  = {&gdmObj.u16MotorRs, 0x56, 0x0253,
-									2924,40000, 0,
+const DM_Cell g_dmCellResStator  = {&gdmObj.u16MotorRs, 0x66, 0x0253,
+									2924,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackResStator};
-const DM_Cell g_dmCellResRotor  = {&gdmObj.u16MotorRr, 0x58, 0x0254,
-									0,40000, 0,
+const DM_Cell g_dmCellResRotor  = {&gdmObj.u16MotorRr, 0x68, 0x0254,
+									0,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackResRotor};
-const DM_Cell g_dmCellIndAxisD  = {&gdmObj.u16MotorLd, 0x5A, 0x0255,
-									3781,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+const DM_Cell g_dmCellIndAxisD  = {&gdmObj.u16MotorLd, 0x6A, 0x0255,
+									0,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_mHenry, NULL, DM_setCallbackIndAxisD};
-const DM_Cell g_dmCellIndAxisQ  = {&gdmObj.u16MotorLq, 0x5C, 0x0256,
-									3781,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+const DM_Cell g_dmCellIndAxisQ  = {&gdmObj.u16MotorLq, 0x6C, 0x0256,
+									0,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_mHenry, NULL, DM_setCallbackIndAxisQ};
-const DM_Cell g_dmCellRatedFlux  = {&gdmObj.u16RatedFlux, 0x5E, 0x0257,
-									1162,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
+const DM_Cell g_dmCellRatedFlux  = {&gdmObj.u16RatedFlux, 0x6E, 0x0257,
+									0,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackRatedFlux};
-const DM_Cell g_dmCellMagnetCur  = {&gdmObj.u16MagnetCur, 0x60, 0x0258,
-									0,50000, 0,
+const DM_Cell g_dmCellMagnetCur  = {&gdmObj.u16MagnetCur, 0x70, 0x0258,
+									0,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackMagnetCur};
 
@@ -569,37 +545,37 @@ const DM_FunCell* g_dmFunCellArrayD1[] = {&g_dmFunCellD1_01, &g_dmFunCellD1_02, 
 
 const DM_Function g_dmFunD1 ={&g_dmFunCellArrayD1[0], 9, "d1","Motor"};
 
-const DM_Cell g_dmCellKp_Speed  = {&gdmObj.u16Kp_Speed, 0x70, 0x0300,
-									6000,50000, 0,
+const DM_Cell g_dmCellKp_Speed  = {&gdmObj.u16Kp_Speed, 0x80, 0x0300,
+									6000,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKpSpeed};
-const DM_Cell g_dmCellKi_Speed  = {&gdmObj.u16Ki_Speed, 0x72, 0x0301,
-									30,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
+const DM_Cell g_dmCellKi_Speed  = {&gdmObj.u16Ki_Speed, 0x82, 0x0301,
+									30,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackKiSpeed};
-const DM_Cell g_dmCellKp_Id  = {&gdmObj.u16Kp_Id, 0x74, 0x0302,
-									100,50000, 0,
+const DM_Cell g_dmCellKp_Id  = {&gdmObj.u16Kp_Id, 0x84, 0x0302,
+									100,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKp_Id};
-const DM_Cell g_dmCellKi_Id  = {&gdmObj.u16Ki_Id, 0x76, 0x0303,
-									12,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
+const DM_Cell g_dmCellKi_Id  = {&gdmObj.u16Ki_Id, 0x86, 0x0303,
+									12,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackKi_Id};
-const DM_Cell g_dmCellKp_Iq  = {&gdmObj.u16Kp_Iq, 0x78, 0x0304,
-									1,50000, 0,
+const DM_Cell g_dmCellKp_Iq  = {&gdmObj.u16Kp_Iq, 0x88, 0x0304,
+									1,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKp_Iq};
-const DM_Cell g_dmCellKi_Iq  = {&gdmObj.u16Ki_Iq, 0x7a, 0x0305,
-									12,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
+const DM_Cell g_dmCellKi_Iq  = {&gdmObj.u16Ki_Iq, 0x8a, 0x0305,
+									12,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackKi_Iq};
-const DM_Cell g_dmCellKp_BLDC  = {&gdmObj.u16Kp_BLDC, 0x7c, 0x0306,
-									340,50000, 0,
+const DM_Cell g_dmCellKp_BLDC  = {&gdmObj.u16Kp_BLDC, 0x8c, 0x0306,
+									340,65535, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
 									DM_UNIT_None, NULL, DM_setCallbackKp_BLDC};
-const DM_Cell g_dmCellKi_BLDC  = {&gdmObj.u16Ki_BLDC, 0x7e, 0x0307,
-									39,50000, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point3,
+const DM_Cell g_dmCellKi_BLDC  = {&gdmObj.u16Ki_BLDC, 0x8e, 0x0307,
+									39,65535, 0,
+									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt16 | DM_ATTRIBUTE_Point4,
 									DM_UNIT_None, NULL, DM_setCallbackKi_BLDC};
 
 const DM_FunCell g_dmFunCellD2_01 	= {&g_dmCellKp_Speed,  1, "Kp (Speed) ",NULL};
@@ -617,23 +593,23 @@ const DM_FunCell* g_dmFunCellArrayD2[] = {&g_dmFunCellD2_01, &g_dmFunCellD2_02, 
 const DM_Function g_dmFunD2 ={&g_dmFunCellArrayD2[0], 8, "d2","PID"};
 
 
-const DM_Cell g_dmCellFactory  = {&gdmObj.u8FactorySetting, NULL, 0x0310,
-									0,1, 0,
-									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
-									DM_UNIT_None, NULL, NULL};
-const DM_Cell g_dmCellMotorModel  = {&gdmObj.u16ModelIndex, 0x80, 0x0311,
+//const DM_Cell g_dmCellFactory  = {&gdmObj.u8FactorySetting, NULL, 0x0310,
+//									0,1, 0,
+//									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
+//									DM_UNIT_None, NULL, NULL};
+const DM_Cell g_dmCellMotorModel  = {&gdmObj.u16ModelIndex, 0x90, 0x0311,
 									0,5, 0,
 									DM_ATTRIBUTE_Read | DM_ATTRIBUTE_Write | DM_ATTRIBUTE_UInt8 ,
 									DM_UNIT_None, NULL, DM_setCallbackMotorModel};
 
-const char g_ai8DescFactory[][MAX_DESCRIPTION_LENGTH]={"No","Yes"};
-const char g_ai8DescModel[][MAX_DESCRIPTION_LENGTH]={"SDCQ BL129S25"," Delta C30604E", "EMJ_04APB22", "QSMotor 3KW", "QSMotor 1.5KW"};
+//const char g_ai8DescFactory[][MAX_DESCRIPTION_LENGTH]={"No","Yes"};
+const char g_ai8DescModel[][MAX_DESCRIPTION_LENGTH]={"SDCQ BL129S25"," Delta C30604E", "EMJ_04APB22", "QSMotor 3KW", "QSMotor 1.5KW", "ADLEE 1HP"};
 
-const DM_FunCell g_dmFunCellD3_01 	= {&g_dmCellFactory,  1, "Factory",&g_ai8DescFactory[0][0]};
-const DM_FunCell g_dmFunCellD3_02 	= {&g_dmCellMotorModel, 2, "Model",&g_ai8DescModel[0][0]};
+//const DM_FunCell g_dmFunCellD3_01 	= {&g_dmCellFactory,  1, "Factory",&g_ai8DescFactory[0][0]};
+const DM_FunCell g_dmFunCellD3_02 	= {&g_dmCellMotorModel, 1, "Model",&g_ai8DescModel[0][0]};
 
-const DM_FunCell* g_dmFunCellArrayD3[] = {&g_dmFunCellD3_01, &g_dmFunCellD3_02};
-const DM_Function g_dmFunD3 ={&g_dmFunCellArrayD3[0], 2, "d3","Restore Paras"};
+const DM_FunCell* g_dmFunCellArrayD3[] = { &g_dmFunCellD3_02};
+const DM_Function g_dmFunD3 ={&g_dmFunCellArrayD3[0], 1, "d3","Restore Paras"};
 
 const DM_Function* g_dmFunDArray[] = {&g_dmFunD1 , &g_dmFunD2, &g_dmFunD3};
 
@@ -1759,7 +1735,11 @@ bool DM_saveToEEprom(DM_Handle dmHandle, const DM_Cell *pdmCell)
     if (u16Address != I2C_ADDRESS_INVALID )
     {
         DM_Obj *pDmObj = (DM_Obj *)dmHandle;
-        return EEPROM_WriteVerify(pDmObj->eepromHandle, u16Address, *((uint16_t *)pdmCell->pValue));
+        if ( EEPROM_WriteVerify(pDmObj->eepromHandle, u16Address, *((uint16_t *)pdmCell->pValue)) ==false)
+        {
+        	DM_setInverterTripType(dmHandle, TripType_EEProm);
+        	DM_runEmergyStop(dmHandle);
+        }
     }
     return true;
 }
@@ -2670,14 +2650,14 @@ void DM_setCallbackResRotor(DM_Handle handle, const DM_Cell *pdmCell)
 void DM_setCallbackIndAxisD(DM_Handle handle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) handle;
-	_iq iqValue = _IQ(pdmObj->u16MotorLd/10000000.);
+	_iq iqValue = _IQ(pdmObj->u16MotorLd/1000000.);
 	gUserParams.fmotor_Ls_d = _IQtoF(iqValue);
 }
 
 void DM_setCallbackIndAxisQ(DM_Handle handle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) handle;
-	_iq iqValue = _IQ(pdmObj->u16MotorLq/10000000.);
+	_iq iqValue = _IQ(pdmObj->u16MotorLq/1000000.);
 	gUserParams.fmotor_Ls_q = _IQtoF(iqValue);
 }
 
@@ -2685,7 +2665,7 @@ void DM_setCallbackIndAxisQ(DM_Handle handle, const DM_Cell *pdmCell)
 void DM_setCallbackRatedFlux(DM_Handle handle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) handle;
-	_iq iqValue = _IQ(pdmObj->u16RatedFlux/10000.);
+	_iq iqValue = _IQ(pdmObj->u16RatedFlux/1000.);
 	gUserParams.fmotor_ratedFlux = _IQtoF(iqValue);
 
 }
@@ -2713,7 +2693,7 @@ void DM_setCallbackKiSpeed(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
-	_iq iqValue = _IQ(pdmObj->u16Ki_Speed/1000.);
+	_iq iqValue = _IQ(pdmObj->u16Ki_Speed/10000.);
 
 	gMotorVars.iqKi_spd = iqValue;
 	//CTRL_setKi(ctlHandle,CTRL_Type_PID_spd,iqValue);
@@ -2735,7 +2715,7 @@ void DM_setCallbackKi_Id(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
-	_iq iqValue = _IQ(pdmObj->u16Ki_Id/1000.);
+	_iq iqValue = _IQ(pdmObj->u16Ki_Id/10000.);
 
 	gMotorVars.iqKi_Id = iqValue;
 	//CTRL_setKi(ctlHandle,CTRL_Type_PID_Id,iqValue);
@@ -2758,7 +2738,7 @@ void DM_setCallbackKi_Iq(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
-	_iq iqValue = _IQ(pdmObj->u16Ki_Iq/1000.);
+	_iq iqValue = _IQ(pdmObj->u16Ki_Iq/10000.);
 
 	gMotorVars.iqKi_Iq = iqValue;
 	//CTRL_setKi(ctlHandle,CTRL_Type_PID_Iq,iqValue);
@@ -2780,10 +2760,66 @@ void DM_setCallbackKi_BLDC(DM_Handle dmHandle, const DM_Cell *pdmCell)
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
 
-	_iq iqValue = _IQ(pdmObj->u16Ki_BLDC/1000.);
+	_iq iqValue = _IQ(pdmObj->u16Ki_BLDC/10000.);
 
 	PID_setKi(HallBLDC_getPIDHandle( hallBLDCHandle) ,iqValue);
 }
+
+/*
+void DM_setcallbackVBias1(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
+	_iq iqValue = _IQ(pdmObj->u16VBias1/10000.);
+	gMotorVars.V_bias.aiqValue[0] = iqValue;
+}
+
+void DM_setcallbackVBias2(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
+	_iq iqValue = _IQ(pdmObj->u16VBias2/10000.);
+	gMotorVars.V_bias.aiqValue[1] = iqValue;
+}
+
+void DM_setcallbackVBias3(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
+	_iq iqValue = _IQ(pdmObj->u16VBias3/10000.);
+	gMotorVars.V_bias.aiqValue[2] = iqValue;
+}
+
+void DM_setcallbackIBias1(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
+	_iq iqValue = _IQ(pdmObj->u16IBias1/10000.);
+	gMotorVars.I_bias.aiqValue[0] = iqValue;
+}
+
+void DM_setcallbackIBias2(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
+	_iq iqValue = _IQ(pdmObj->u16IBias2/10000.);
+	gMotorVars.I_bias.aiqValue[1] = iqValue;
+}
+
+void DM_setcallbackIBias3(DM_Handle dmHandle, const DM_Cell *pdmCell)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	HALLBLDC_Handle hallBLDCHandle = DM_getHallBLDCHandle(dmHandle);
+
+	_iq iqValue = _IQ(pdmObj->u16IBias3/10000.);
+	gMotorVars.I_bias.aiqValue[2] = iqValue;
+}
+*/
 
 _iq DM_transSpeedPu(uint16_t u16SpeedRpm)
 {
@@ -2807,7 +2843,7 @@ void DM_setCallbackFOCtoBLDC(DM_Handle dmHandle, const DM_Cell *pdmCell)
 
 void DM_calcPIgains(DM_Handle dmHandle)
 {
-	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
+	//DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	CTRL_Handle ctlHandle = DM_getCtlHandle(dmHandle);
 	CTRL_Obj *pctlObj = (CTRL_Obj *) ctlHandle;
 
@@ -2871,16 +2907,25 @@ void DM_calcPIgains(DM_Handle dmHandle)
 	gMotorVars.iqKp_spd = iqKp_Speed;
 	gMotorVars.iqKi_spd = iqKi_Speed;
 
+	DM_SavePIgains(dmHandle);
+
+
+
+} // end of calcPIgains() function
+
+void DM_SavePIgains(DM_Handle dmHandle)
+{
+	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	pdmObj->u16Kp_Id = (uint16_t) _IQmpyI32int(gMotorVars.iqKp_Id, 1000);
-	pdmObj->u16Ki_Id = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_Id, 1000);
+	pdmObj->u16Ki_Id = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_Id, 10000);
 	pdmObj->u16Kp_Iq = (uint16_t) _IQmpyI32int(gMotorVars.iqKp_Iq, 1000);
-	pdmObj->u16Ki_Iq = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_Iq, 1000);
+	pdmObj->u16Ki_Iq = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_Iq, 10000);
 	pdmObj->u16Kp_Speed = (uint16_t) _IQmpyI32int(gMotorVars.iqKp_spd, 1000);
-	pdmObj->u16Ki_Speed = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_spd, 1000);
+	pdmObj->u16Ki_Speed = (uint16_t) _IQmpyI32int(gMotorVars.iqKi_spd, 10000);
 
-	//_iq iqValue = _IQ(pdmObj->u16Ki_BLDC/1000.);
+		//_iq iqValue = _IQ(pdmObj->u16Ki_BLDC/1000.);
 
-	//PID_setKi(HallBLDC_getPIDHandle( hallBLDCHandle) ,iqValue);
+		//PID_setKi(HallBLDC_getPIDHandle( hallBLDCHandle) ,iqValue);
 
 
 	DM_saveToEEprom(dmHandle, &g_dmCellKp_Speed);
@@ -2891,10 +2936,7 @@ void DM_calcPIgains(DM_Handle dmHandle)
 	DM_saveToEEprom(dmHandle, &g_dmCellKi_Iq);
 	DM_saveToEEprom(dmHandle, &g_dmCellKp_BLDC);
 	DM_saveToEEprom(dmHandle, &g_dmCellKi_BLDC);
-
-
-
-} // end of calcPIgains() function
+}
 
 void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 {
@@ -2912,6 +2954,7 @@ void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 	{
 		case 0:	//BL129S25", , "Hub3000"}
 			gUserParams.u16motor_numPolePairs = 4;
+			gUserParams.motor_type = MOTOR_Type_Pm;
 
 			pdmObj->i16MaxCurrent = 180;	//18A
 			pdmObj->i16ResEstCurrent = 8;	//0.8A
@@ -2927,24 +2970,26 @@ void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 		    gMotorVars.fFlux_VpHz = 0.11662;
 		    gMotorVars.fMagnCurr_A = 0;
 		    break;
-		case 1: //"C30604E"
+		case 1: //" Delta C30604E"
 			gUserParams.u16motor_numPolePairs = 4;
+			gUserParams.motor_type = MOTOR_Type_Pm;
 
-			pdmObj->i16MaxCurrent = 20;	//2A
-			pdmObj->i16ResEstCurrent = 8;	//0.8A
-			pdmObj->i16IndEstCurrent = -8;	//0.8A
-			pdmObj->i16FluxEstHz = 200;
+			pdmObj->i16MaxCurrent = 10;	//1A
+			pdmObj->i16ResEstCurrent = 5;	//0.5A
+			pdmObj->i16IndEstCurrent = -5;	//0.5A
+			pdmObj->i16FluxEstHz = 200;		//20.0
 			pdmObj->u16AccTime = 20;	//0.2
 
-			gMotorVars.fRs_Ohm = 1.3356;
+			gMotorVars.fRs_Ohm = 1.5843;
 			gMotorVars.fRr_Ohm = 0;
-			gMotorVars.fLsd_H = 0.00610;
-			gMotorVars.fLsq_H = 0.00610;
-			gMotorVars.fFlux_VpHz = 0.2670;
+			gMotorVars.fLsd_H = 0.006434;
+			gMotorVars.fLsq_H = 0.006434;
+			gMotorVars.fFlux_VpHz = 0.3268;
 			gMotorVars.fMagnCurr_A = 0;
 			break;
 		case 2: //EMJ_04APB22
 			gUserParams.u16motor_numPolePairs = 2;
+			gUserParams.motor_type = MOTOR_Type_Pm;
 
 			pdmObj->i16MaxCurrent = 20;	//2A
 			pdmObj->i16ResEstCurrent = 8;	//0.8A
@@ -2959,24 +3004,10 @@ void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 			gMotorVars.fFlux_VpHz = 0.384698;
 			gMotorVars.fMagnCurr_A = 0;
 			break;
-		case 3: //	EMJ_04APB22
-			gUserParams.u16motor_numPolePairs = 2;
 
-			pdmObj->i16MaxCurrent = 382;	//2A
-			pdmObj->i16ResEstCurrent = 10;	//0.8A
-			pdmObj->i16IndEstCurrent = -10;	//0.8A
-			pdmObj->i16FluxEstHz = 200;
-			pdmObj->u16AccTime = 20;	//0.2
-
-			gMotorVars.fRs_Ohm = 2.2002;
-			gMotorVars.fRr_Ohm = 0;
-			gMotorVars.fLsd_H = 0.008721;
-			gMotorVars.fLsq_H = 0.008721;
-			gMotorVars.fFlux_VpHz = 0.38467;
-			gMotorVars.fMagnCurr_A = 0;
-			break;
-		case 4: // QSmotor¡Ä¢²¢Ù¢å
+		case 3: // QSmotor¡Ä¢²¢Ù¢å
 			gUserParams.u16motor_numPolePairs = 16;
+			gUserParams.motor_type = MOTOR_Type_Pm;
 
 			pdmObj->i16MaxCurrent = 80;	//2A
 			pdmObj->i16ResEstCurrent = 25;	//0.8A
@@ -2991,8 +3022,9 @@ void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 			gMotorVars.fFlux_VpHz = 0.20511;
 			gMotorVars.fMagnCurr_A = 0;
 			break;
-		case 5: // QSmotor¡Ä1.5¢Ù¢å
+		case 4: // QSmotor¡Ä1.5¢Ù¢å
 			gUserParams.u16motor_numPolePairs = 16;
+			gUserParams.motor_type = MOTOR_Type_Pm;
 
 			pdmObj->i16MaxCurrent = 80;	//2A
 			pdmObj->i16ResEstCurrent = 25;	//0.8A
@@ -3007,11 +3039,29 @@ void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 			gMotorVars.fFlux_VpHz = 0.113901;
 			gMotorVars.fMagnCurr_A = 0;
 			break;
+		case 5: //ADLEDD 760W
+			gUserParams.u16motor_numPolePairs = 4;
+			gUserParams.motor_type = MOTOR_Type_Pm;
+
+			pdmObj->i16MaxCurrent = 40;	//4A
+			pdmObj->i16ResEstCurrent = 8;	//0.8A
+			pdmObj->i16IndEstCurrent = -8;	//0.8A
+			pdmObj->i16FluxEstHz = 200;
+			pdmObj->u16AccTime = 20;	//0.02
+
+			gMotorVars.fRs_Ohm = 0.70242;
+			gMotorVars.fRr_Ohm = 0;
+			gMotorVars.fLsd_H = 0.003947;
+			gMotorVars.fLsq_H = 0.003947;
+			gMotorVars.fFlux_VpHz = 0.57421;
+			gMotorVars.fMagnCurr_A = 0;
+			break;
 
 	}
 
 
 	DM_saveToEEprom(dmHandle, &g_dmCellPolePair);
+	DM_saveToEEprom(dmHandle, &g_dmCellMotorType);
 	DM_saveToEEprom(dmHandle, &g_dmCellAccTime);
 
 	DM_saveToEEprom(dmHandle, &g_dmCellMaxCurrent);
@@ -3040,13 +3090,13 @@ void DM_setCallbackMotorModel(DM_Handle dmHandle, const DM_Cell *pdmCell)
 void DM_saveBiasParameters(DM_Handle dmHandle)
 {
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-	pdmObj->u16VBias1 = (uint16_t) _IQmpyI32int(gMotorVars.V_bias.aiqValue[0], 1000);
-	pdmObj->u16VBias2 = (uint16_t) _IQmpyI32int(gMotorVars.V_bias.aiqValue[1], 1000);
-	pdmObj->u16VBias3 = (uint16_t) _IQmpyI32int(gMotorVars.V_bias.aiqValue[2], 1000);
+	pdmObj->u16VBias1 = (uint16_t) _IQmpyI32int(gMotorVars.V_bias.aiqValue[0], 10000);
+	pdmObj->u16VBias2 = (uint16_t) _IQmpyI32int(gMotorVars.V_bias.aiqValue[1], 10000);
+	pdmObj->u16VBias3 = (uint16_t) _IQmpyI32int(gMotorVars.V_bias.aiqValue[2], 10000);
 
-	pdmObj->u16IBias1 = (uint16_t) _IQmpyI32int(gMotorVars.I_bias.aiqValue[0], 1000);
-	pdmObj->u16IBias2 = (uint16_t) _IQmpyI32int(gMotorVars.I_bias.aiqValue[1], 1000);
-	pdmObj->u16IBias3 = (uint16_t) _IQmpyI32int(gMotorVars.I_bias.aiqValue[2], 1000);
+	pdmObj->u16IBias1 = (uint16_t) _IQmpyI32int(gMotorVars.I_bias.aiqValue[0], 10000);
+	pdmObj->u16IBias2 = (uint16_t) _IQmpyI32int(gMotorVars.I_bias.aiqValue[1], 10000);
+	pdmObj->u16IBias3 = (uint16_t) _IQmpyI32int(gMotorVars.I_bias.aiqValue[2], 10000);
 
 
 
@@ -3066,9 +3116,9 @@ void DM_saveMotorParameters(DM_Handle dmHandle)
 	DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	pdmObj->u16MotorRs = gMotorVars.fRs_Ohm  *10000;
 	pdmObj->u16MotorRr = gMotorVars.fRr_Ohm *10000;
-	pdmObj->u16MotorLd = gMotorVars.fLsd_H *10000000;
-	pdmObj->u16MotorLq = gMotorVars.fLsq_H *10000000;
-	pdmObj->u16RatedFlux = gMotorVars.fFlux_VpHz *10000;
+	pdmObj->u16MotorLd = gMotorVars.fLsd_H *1000000;
+	pdmObj->u16MotorLq = gMotorVars.fLsq_H *1000000;
+	pdmObj->u16RatedFlux = gMotorVars.fFlux_VpHz *1000;
 	pdmObj->u16MagnetCur = gMotorVars.fMagnCurr_A *10000;
 
 	gUserParams.fmotor_Rs = gMotorVars.fRs_Ohm;
@@ -3087,9 +3137,9 @@ void DM_saveMotorParameters(DM_Handle dmHandle)
 
 
 
-	//DM_saveBiasParameters(dmHandle);
+	DM_saveBiasParameters(dmHandle);
 
-	//gMotorVars.bFlag_enableSys = false;
+	gMotorVars.bFlag_enableSys = false;
 
 }
 

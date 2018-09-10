@@ -145,9 +145,6 @@
 						 //ST_VARS_DEFAULTS}
 
 
-//! \setting the initial value for the global variable of  gMotorVar(the main parameters using during the execution process)
-
-
 // **************************************************************************
 // the typedefs
 

@@ -556,8 +556,9 @@ void OPERATOR_showAutoTune(OPERATOR_Handle operHandle)
         	if (!bSaveMotorFlag)
         	{
         		bSaveMotorFlag = true;
-        		DM_saveMotorParameters(pOperator->dmHandle);
-        		DM_saveBiasParameters(pOperator->dmHandle);
+        		DM_saveMotorParameters(pOperator->dmHandle);		//Including Bias
+        		//DM_saveBiasParameters(pOperator->dmHandle);
+        		DM_SavePIgains(pOperator->dmHandle);
         		//DM_calcPIgains(pOperator->dmHandle);
         	}
         	break;

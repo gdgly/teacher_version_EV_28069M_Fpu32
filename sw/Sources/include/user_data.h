@@ -165,7 +165,7 @@ typedef enum
 	DM_ATTRIBUTE_Write 	= 0x0002,
 	DM_ATTRIBUTE_Write_Run = 0x0004,
 
-	/*setting how many float point you need*/
+
 	DM_ATTRIBUTE_Point0 = 0x0000,
 	DM_ATTRIBUTE_Point1 = 0x0010,
 	DM_ATTRIBUTE_Point2 = 0x0020,
@@ -218,8 +218,7 @@ typedef struct _DM_Cell_
 	void			*pValue;
 	uint16_t		u16EEPromAddr, u16ModbusAdd;
 	uint16_t		u16DefValue, u16MaxValue, u16MinValue;
-	uint16_t 		u16Attribute;
-	uint16_t        u16Unit;
+	uint16_t 		u16Attribute, u16Unit;
 
 	//int32_t (*CallbackValue)(const struct _DM_Cell_ *pdmCell);
 	int32_t (*getCallbackFunction)(DM_Handle handle);
@@ -771,6 +770,7 @@ extern void DM_outFunction(DM_Handle dmHandle,
 extern void DM_saveMotorParameters(DM_Handle dmHandle);
 extern void DM_saveBiasParameters(DM_Handle dmHandle);
 extern void DM_calcPIgains(DM_Handle dmHandle);
+extern void DM_SavePIgains(DM_Handle dmHandle);
 //extern void DM_setCallbackFreqRef(DM_Handle handle, const DM_Cell *pdmCell);
 //extern void DM_setCallbackCurrentRef(DM_Handle handle, const DM_Cell *pdmCell);
 
@@ -821,6 +821,7 @@ extern void DM_setCallbackIndAxisQ(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackRatedFlux(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackMagnetCur(DM_Handle handle, const DM_Cell *pdmCell);
 
+
 extern void DM_setCallbackKpSpeed(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackKiSpeed(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackKp_Id(DM_Handle handle, const DM_Cell *pdmCell);
@@ -833,8 +834,13 @@ extern void DM_setCallbackBLDCtoFOC(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackFOCtoBLDC(DM_Handle handle, const DM_Cell *pdmCell);
 extern void DM_setCallbackMotorModel(DM_Handle handle, const DM_Cell *pdmCell);
 
-
-
+/*extern void DM_setcallbackVBias1(DM_Handle dmHandle, const DM_Cell *pdmCell);
+extern void DM_setcallbackVBias2(DM_Handle dmHandle, const DM_Cell *pdmCell);
+extern void DM_setcallbackVBias3(DM_Handle dmHandle, const DM_Cell *pdmCell);
+extern void DM_setcallbackIBias1(DM_Handle dmHandle, const DM_Cell *pdmCell);
+extern void DM_setcallbackIBias2(DM_Handle dmHandle, const DM_Cell *pdmCell);
+extern void DM_setcallbackIBias3(DM_Handle dmHandle, const DM_Cell *pdmCell);
+*/
 
 #ifdef __cplusplus
 }

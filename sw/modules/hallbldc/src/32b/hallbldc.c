@@ -350,15 +350,13 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
+            /*pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[1] = iqPwmDuty;
-            pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;
+            pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[1] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[2] = iqPwmDuty;
-*/
 
             pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
             break;
@@ -369,18 +367,16 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_setOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = iqPwmDuty;
+            /*pPwmData->Tabc.aiqValue[0] = iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = _IQ(0.0);
-            pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;
+            pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[2] = iqPwmDuty;
-*/
 
-            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
-//            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
+            //pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
+            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
             break;
         }
         case 2:     //U+/V-
@@ -389,18 +385,16 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_setOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = iqPwmDuty;
+            /*pPwmData->Tabc.aiqValue[0] = iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = -iqPwmDuty;
-            pPwmData->Tabc.aiqValue[2] = _IQ(0.0);
+            pPwmData->Tabc.aiqValue[2] = _IQ(0.0);*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = iqPwmDuty;
             pPwmData->Tabc.aiqValue[2] = _IQ(0.0);
-*/
 
-            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
-//            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
+            //pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
+            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
             break;
         }
         case 3:     //W+/V-
@@ -409,19 +403,17 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
+            /*pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[1] = -iqPwmDuty;
-            pPwmData->Tabc.aiqValue[2] = iqPwmDuty;
+            pPwmData->Tabc.aiqValue[2] = iqPwmDuty;*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[1] = iqPwmDuty;
             pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;
-*/
 
 
-            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
-//            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
+            //pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
+            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
             break;
         }
         case 4:     //W+/U-
@@ -430,18 +422,16 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_setOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = -iqPwmDuty;
+            /*pPwmData->Tabc.aiqValue[0] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = _IQ(0.0);
-            pPwmData->Tabc.aiqValue[2] = iqPwmDuty;
+            pPwmData->Tabc.aiqValue[2] = iqPwmDuty;*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;
-*/
 
-            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
-//            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
+            //pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
+            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
             break;
         }
         case 5:     // V+/U-
@@ -450,18 +440,16 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_setOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = -iqPwmDuty;
+            /*pPwmData->Tabc.aiqValue[0] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = iqPwmDuty;
-            pPwmData->Tabc.aiqValue[2] = _IQ(0.0);
+            pPwmData->Tabc.aiqValue[2] = _IQ(0.0);*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = iqPwmDuty;
             pPwmData->Tabc.aiqValue[1] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[2] = _IQ(0.0);
-*/
 
-            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
-//            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
+            //pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
+            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 0;
             break;
         }
         case 6:     // V+/W-
@@ -470,19 +458,16 @@ void HALLBLDC_Ctrl_PwmSet(  HAL_Handle halHandle,HALLBLDC_Handle handleBldc,
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_2]);
             PWM_clearOneShotTrip(pHalObj->pwmHandle[PWM_Number_3]);
 
-            pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
-
+            /*pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[1] = iqPwmDuty;
-            pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;
+            pPwmData->Tabc.aiqValue[2] = -iqPwmDuty;*/
 
-/*
             pPwmData->Tabc.aiqValue[0] = _IQ(0.0);
             pPwmData->Tabc.aiqValue[1] = -iqPwmDuty;
             pPwmData->Tabc.aiqValue[2] = iqPwmDuty;
-*/
 
-            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
-//            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
+            //pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 1;
+            pHallBldcObj->u8Hall_BLDC_Flag_Is_fdb = 2;
             break;
         }
         default:    // N/A

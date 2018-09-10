@@ -145,14 +145,18 @@ bool EEPROM_WriteVerify(EEPROM_Handle eepromHandle, uint16_t u16Address, uint16_
 
 	if (EEPROM_Write(eepromHandle, u16Address, u16Data))
 	{
-		uint16_t u16Temp;
-		usDelay(100);
-		if (EEPROM_Read(eepromHandle, u16Address, &u16Temp) )
+		uint16_t u16Temp, i;
+		for (i=0; i< 5; i++)
 		{
-			if (u16Temp == u16Data)
-				return true;
+			usDelay(2000);
+			if (EEPROM_Read(eepromHandle, u16Address, &u16Temp) )
+			{
+				if (u16Temp == u16Data)
+					return true;
+			}
 		}
 	}
+
 	return false;
 }
 
