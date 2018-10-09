@@ -289,7 +289,8 @@ void main(void)
 
 	gThrottleHandle = Throttle_init(&gThrottleObj,sizeof(gThrottleObj));
 	{
-	    Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.4), _IQ(0.0));
+	    //Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.4), _IQ(0.0));
+	    Throttle_setParams(gThrottleHandle, false,_IQ(USER_EXT_ADC_SF), _IQ(0.1), _IQ(0.6), _IQ(0.0));
 	}
 
 #ifndef F2802xF

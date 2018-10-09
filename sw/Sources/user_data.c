@@ -2276,6 +2276,9 @@ void DM_autotunePrepStart(DM_Handle dmHandle)
 	//DM_Obj *pdmObj = (DM_Obj *) dmHandle;
 	//pdmObj->bAutotuneMode = true;
 
+    //add by tingwei 10/8
+    //gMotorVars.bFlag_enableRsRecalc = true;
+    //
 	gMotorVars.bFlag_enableOffsetcalc = true;
 	gMotorVars.bFlag_enableUserParams = false;
 	gMotorVars.bFlag_MotorIdentified = false;
@@ -2297,7 +2300,7 @@ void DM_autotuneStart(DM_Handle dmHandle)
 void DM_autotuneEnd(DM_Handle dmHandle)
 {
 	//DM_Obj *pdmObj = (DM_Obj *) dmHandle;
-	gMotorVars.bFlag_enableOffsetcalc = false;
+	gMotorVars.bFlag_enableOffsetcalc = false;// tingwei 10/8
 	gMotorVars.bFlag_enableSys = false;
 	//gMotorVars.bFlag_Run_Identify = false;
 
